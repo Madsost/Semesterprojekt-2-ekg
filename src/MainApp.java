@@ -19,7 +19,7 @@ public class MainApp extends Application {
 			this.primaryStage.setTitle("GUI-Mockup");
 
 			FXMLLoader loader = new FXMLLoader();
-			loader.setLocation(MainApp.class.getResource("/RootLayout.FXML"));
+			loader.setLocation(MainApp.class.getResource("view/RootLayout.FXML"));
 
 			rootLayout = (BorderPane) loader.load();
 			Scene scene = new Scene(rootLayout);
@@ -28,7 +28,7 @@ public class MainApp extends Application {
 			primaryStage.show();
 
 			loader = new FXMLLoader();
-			loader.setLocation(MainApp.class.getResource("/EKGView.FXML"));
+			loader.setLocation(MainApp.class.getResource("view/EKGView.FXML"));
 			AnchorPane ekgOverview = (AnchorPane) loader.load();
 			rootLayout.setCenter(ekgOverview);
 			
