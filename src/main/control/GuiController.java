@@ -1,5 +1,7 @@
 package main.control;
 
+import java.awt.event.ActionListener;
+
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
@@ -12,7 +14,7 @@ public class GuiController extends Application {
 
 	private Stage primaryStage;
 	private BorderPane rootLayout;
-
+	
 	@Override
 	public void start(Stage primaryStage) {
 		try {
@@ -33,10 +35,10 @@ public class GuiController extends Application {
 			loader.setLocation(MainApp.class.getResource("view/EKGView.FXML"));
 			AnchorPane ekgOverview = (AnchorPane) loader.load();
 			rootLayout.setCenter(ekgOverview);
+			
 
 		} catch (Exception e) {
-		}
-
+		}		
 	}
-
+	
 }
