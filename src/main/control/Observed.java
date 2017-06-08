@@ -7,5 +7,5 @@ public interface Observed {
 	
 	public void detachListener(ActionListener l);
 	
-	public void notification();	
+	public void notification(String string);	
 }

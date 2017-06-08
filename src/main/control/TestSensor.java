@@ -7,7 +7,7 @@ public class TestSensor implements Sensor, Observed {
 
 	// sætter instansen op af Queue så det er den samme som databaseConn tilgår
 	Queue q = Queue.getInstance();
-
+	
 	@Override
 	public void init() {
 		// TODO Auto-generated method stub
@@ -32,9 +32,9 @@ public class TestSensor implements Sensor, Observed {
 	}
 
 	@Override
-	public void notification() {
+	public void notification(String string) {
 		// TODO Auto-generated method stub
-
+		
 	}
 
 }
