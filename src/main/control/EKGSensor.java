@@ -3,7 +3,7 @@ package main.control;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-public class EKGSensor implements Sensor{
+public class EKGSensor implements Sensor, Observed{
 
 	@Override
 	public void init() {
