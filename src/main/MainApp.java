@@ -17,7 +17,7 @@ public class MainApp{
 			// beregn puls
 			
 			// vent 
-		}S
+		}
 	}
 	
 	private static void init() {
