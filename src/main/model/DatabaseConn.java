@@ -7,10 +7,6 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
-import javax.naming.Context;
-import javax.naming.InitialContext;
-import javax.sql.DataSource;
-
 import main.control.Observed;
 import main.control.Queue;
 
@@ -42,21 +38,7 @@ public class DatabaseConn extends Thread implements Observed {
 			conn.setAutoCommit(false);
 			System.out.println("Forbindelse oprettet til databasen!");
 
-			System.out.println("Opretter undersøgelse ... ");
-			// hent den aktuelle undersøgelsesID og gem i activeExamination
-			String sql = "INSERT INTO Undersøgelse (Start, Slut) VALUES (now(), now());";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.execute();
-			conn.commit();
-			System.out.println("Undersøgelse oprettet!");
-
-			System.out.println("Henter undersøgelsesID ...");
-			sql = "SELECT LAST_INSERT_ID() FROM Undersøgelse";
-			stmt = conn.createStatement();
-			ResultSet rset = stmt.executeQuery(sql);
-			if (rset.next())
-				activeExamination = rset.getInt(1);
-			System.out.println("UndersøgelsesID hentet!");
+			newExamination();
 
 		} catch (Exception e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
@@ -214,6 +196,29 @@ public class DatabaseConn extends Thread implements Observed {
 		}
 		Thread.sleep(2000);
 		dtb.stopExamination();
+	}
+
+	public void newExamination() {
+		try {
+			System.out.println("Opretter undersøgelse ... ");
+			// hent den aktuelle undersøgelsesID og gem i activeExamination
+			String sql = "INSERT INTO Undersøgelse (Start, Slut) VALUES (now(), now());";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.execute();
+			conn.commit();
+			System.out.println("Undersøgelse oprettet!");
+
+			System.out.println("Henter undersøgelsesID ...");
+			sql = "SELECT LAST_INSERT_ID() FROM Undersøgelse";
+			stmt = conn.createStatement();
+			ResultSet rset = stmt.executeQuery(sql);
+			if (rset.next())
+				activeExamination = rset.getInt(1);
+			System.out.println("UndersøgelsesID hentet!");
+		} catch (SQLException e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+		}
+
 	}
 
 }

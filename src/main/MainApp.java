@@ -9,8 +9,8 @@ import javafx.application.Application;
 
 public class MainApp{
 	private static boolean running = false;
-	private static Calculator cal;
-	private static Sensor s;
+	private static Calculator cal = null;
+	private static Sensor s = null;
 
 	private static void run() {
 		while(running){
@@ -49,6 +49,18 @@ public class MainApp{
 		guiThread.start();	
 		init();
 		
+	}
+
+	public static void pauseSensor() {
+		try {
+			s.wait();
+		} catch (InterruptedException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void cont() {
+		s.notify();
 	}
 
 
