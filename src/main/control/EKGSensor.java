@@ -30,7 +30,7 @@ public class EKGSensor implements Sensor, Observed{
 	}
 
 	@Override
-	public void notification() {
+	public void notification(String string) {
 		// TODO Auto-generated method stub
 		
 	}
