@@ -14,12 +14,13 @@ import javax.sql.DataSource;
 import main.control.Observed;
 import main.control.Queue;
 
-public class DatabaseConn implements Observed {
+public class DatabaseConn extends Thread implements Observed {
 
 	private List<ActionListener> lyttere = new ArrayList<ActionListener>();
 
 	private static DatabaseConn instance;
 	private Queue q = Queue.getInstance();
+	private boolean running = false;
 	private Connection conn = null;
 	private Statement stmt = null;
 	private PreparedStatement pstmt = null;
@@ -181,6 +182,21 @@ public class DatabaseConn implements Observed {
 		for (Iterator<ActionListener> i = lyttere.iterator(); i.hasNext();) {
 			ActionListener l = (ActionListener) i.next();
 			l.actionPerformed(event);
+		}
+	}
+
+	@Override
+	public void run() {
+		running = true;
+		while (running) {
+			ArrayList<Integer> toDatabase = q.getBuffer();
+			if (toDatabase.size() > 0 && toDatabase != null)
+				this.addData(toDatabase);
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			}
 		}
 	}
 

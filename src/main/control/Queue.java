@@ -4,23 +4,23 @@ import java.util.ArrayList;
 
 public class Queue {
 
-	ArrayList<Double> buffer = new ArrayList<Double>();
-	boolean empty = true;
-	static Queue instance;
+	private ArrayList<Integer> buffer = new ArrayList<>();
+	private boolean empty = true;
+	private static Queue instance;
 
 	private Queue() {
 
 	}
 
 	// insert value from sensor to the end of the buffer
-	public void addToBuffer(double value) {
+	public void addToBuffer(int value) {
 		buffer.add(value);
 		empty = false;
-		notify(); // **ellers er den pågældende tråd i getBuffer fanget??
+		notify(); // **ellers er den pÃ¥gÃ¦ldende trÃ¥d i getBuffer fanget??
 	}
 
 	// returns and clears the buffer
-	public synchronized ArrayList<Double> getBuffer() {
+	public synchronized ArrayList<Integer> getBuffer() {
 
 		// if the buffer is empty, the thread is put to sleep
 		while (empty) {
@@ -33,7 +33,7 @@ public class Queue {
 		}
 		// clear the buffer and returns
 		empty = true;
-		ArrayList<Double> placeHolder = new ArrayList<Double>();
+		ArrayList<Integer> placeHolder = new ArrayList<>();
 		placeHolder = buffer;
 		buffer.clear();
 		notify();
