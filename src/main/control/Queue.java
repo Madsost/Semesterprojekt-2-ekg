@@ -13,7 +13,9 @@ public class Queue {
 	}
 
 	// insert value from sensor to the end of the buffer
+	// called from sensor to put values in the Queue
 	public void addToBuffer(int value) {
+		
 		buffer.add(value);
 		empty = false;
 		notify(); // **ellers er den pågældende tråd i getBuffer fanget??
