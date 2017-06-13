@@ -27,11 +27,10 @@ public class EKGSensor extends Thread implements Sensor {
 
 				@Override
 				public void serialEvent(SerialPortEvent event) {
-					// if there is is something on the port we want to read it
 					try {
 						if (event.getEventValue() > 0) {
 
-							// put what is on the buffer in a long String
+							// put what is on the buffer in a String
 							input += port.readString(event.getEventValue());
 
 							// while there is someting in the string we read, we
