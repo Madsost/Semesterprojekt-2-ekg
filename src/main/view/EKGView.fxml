@@ -1,8 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.scene.chart.CategoryAxis?>
-<?import javafx.scene.chart.LineChart?>
-<?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.Label?>
@@ -11,7 +8,7 @@
 
 <AnchorPane prefHeight="500.0" prefWidth="800.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.view.EKGViewController">
    <children>
-      <Label layoutX="238.0" layoutY="14.0" text="Elektrokardiogram" AnchorPane.topAnchor="14.0">
+      <Label layoutX="238.0" layoutY="14.0" prefHeight="58.0" prefWidth="335.0" text="Elektrokardiogram" AnchorPane.leftAnchor="238.0" AnchorPane.rightAnchor="227.0" AnchorPane.topAnchor="14.0">
          <font>
             <Font size="40.0" />
          </font>
@@ -28,17 +25,6 @@
          </font>
       </Label>
       <CheckBox fx:id="showGraph" layoutX="50.0" layoutY="345.0" mnemonicParsing="false" onAction="#handleCheckBox" text="Vis graf" AnchorPane.bottomAnchor="134.0" AnchorPane.leftAnchor="50.0" />
-      <AnchorPane fx:id="graphPane" layoutX="50.0" layoutY="75.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0" AnchorPane.topAnchor="75.0">
-         <children>
-            <LineChart fx:id="graph" animated="false" prefHeight="255.0" prefWidth="700.0">
-              <xAxis>
-                <CategoryAxis side="BOTTOM" fx:id="xAxis" />
-              </xAxis>
-              <yAxis>
-                <NumberAxis fx:id="yAxis" side="LEFT" />
-              </yAxis>
-            </LineChart>
-         </children>
-      </AnchorPane>
+      <AnchorPane fx:id="graphPane" layoutX="50.0" layoutY="75.0" prefHeight="250.0" prefWidth="700.0" AnchorPane.leftAnchor="50.0" AnchorPane.rightAnchor="50.0" AnchorPane.topAnchor="75.0" />
    </children>
 </AnchorPane>

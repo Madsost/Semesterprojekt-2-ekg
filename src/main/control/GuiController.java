@@ -3,11 +3,13 @@ package main.control;
 import java.awt.event.ActionListener;
 
 import javafx.application.Application;
+import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
 import main.MainApp;
 import main.view.EKGViewController;
 import main.view.RootLayoutController;
@@ -31,8 +33,20 @@ public class GuiController extends Application {
 			initRootLayout();
 
 			showEKGView();
+			
+			// tilføj en eventhandler så alt bliver afsluttet når vinduet lukker.
+			/*this.primaryStage.addEventHandler(new WindowEvent, new EventHandler<WindowEvent>(){
+					
+				@Override
+				public void handle(WindowEvent arg0) {
+					// TODO Auto-generated method stub
+					
+				}
+				
+			});*/
 
 		} catch (Exception e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -64,7 +78,7 @@ public class GuiController extends Application {
 			loader.setLocation(MainApp.class.getResource("view/EKGView.FXML"));
 
 			AnchorPane ekgOverview = (AnchorPane) loader.load();
-			
+
 			rootLayout.setCenter(ekgOverview);
 
 			EKGViewController controller = loader.getController();
@@ -79,12 +93,12 @@ public class GuiController extends Application {
 	public void pause() {
 		MainApp.pauseSensor();
 	}
-	
-	public void begin(){
+
+	public void begin() {
 		MainApp.start();
 	}
-	
-	public void cont(){
+
+	public void cont() {
 		MainApp.cont();
 	}
 

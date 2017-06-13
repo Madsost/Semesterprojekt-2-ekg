@@ -7,48 +7,58 @@ import main.control.Sensor;
 import main.control.TestSensor;
 import javafx.application.Application;
 
-public class MainApp{
+public class MainApp {
 	private static boolean running = false;
 	private static Calculator cal = null;
 	private static Sensor s = null;
+	private static boolean testing = true;
+	private static Thread sensorThread = null;
 
 	private static void run() {
-		while(running){
+		sensorThread = new Thread(s);
+		sensorThread.setDaemon(true);
+		sensorThread.start();
+		sensorThread.setName("Sensor tråd");
+		cal = new Calculator();
+
+		while (running) {
 			// beregn puls
-			
-			// vent 
+
+			// vent
 		}
 	}
-	
+
 	private static void init() {
-		cal = new Calculator();
 		// if test
-		s = new TestSensor();
+		if (testing)
+			s = new TestSensor();
+
 		// if not test
-		s = new EKGSensor();
+		else
+			s = new EKGSensor();
+		s.init();
 	}
-	
-	public static void start(){
-		running = true; 
-		
+
+	public static void start() {
+		running = true;
+
 		run();
 	}
-	
-	public static void stop(){
+
+	public static void stop() {
 		running = false;
 	}
 
-	
 	public static void main(String[] args) {
 		// tråd til GUI
-		Thread guiThread = new Thread(){
-			public void run(){
+		Thread guiThread = new Thread() {
+			public void run() {
 				Application.launch(GuiController.class);
 			}
 		};
-		guiThread.start();	
-		//init();
-		
+		guiThread.start();
+		init();
+		run();
 	}
 
 	public static void pauseSensor() {
@@ -62,7 +72,6 @@ public class MainApp{
 	public static void cont() {
 		s.notify();
 	}
-
 
 }
 

@@ -27,7 +27,7 @@ public class DatabaseConn extends Thread implements Observed {
 
 	private final String USER = "java";
 	private final String PASS = "1234";
-	
+
 	private int oldID = 0;
 	private int newID = 0;
 
@@ -61,21 +61,26 @@ public class DatabaseConn extends Thread implements Observed {
 	 * @param data
 	 */
 	public synchronized void addData(ArrayList<Integer> data) {
+		System.out.println("Tilføj data til database: " + this.getClass().getName());
 		try {
 			String sql = "SELECT LAST_INSERT_ID() FROM Måling WHERE TYPE=1";
 			stmt = conn.createStatement();
 			ResultSet rset = stmt.executeQuery(sql);
 			if (rset.next())
 				oldID = rset.getInt(1);
+			sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES";
 			for (int input : data) {
-				sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES(?,?,"
-						+ activeExamination + ")";
-				pstmt = conn.prepareStatement(sql);
-				pstmt.setInt(1, input);
-				pstmt.setInt(2, 1);
-				pstmt.execute();
-				conn.commit();
+				sql += "(" + input + ",1," + activeExamination + "),";
 			}
+			int length = sql.length();
+			sql = sql.substring(0, length - 1);
+			// System.out.println(sql);
+			sql += ";";
+			// System.out.println(sql);
+			pstmt = conn.prepareStatement(sql);
+			pstmt.execute();
+			conn.commit();
+
 			sql = "SELECT LAST_INSERT_ID() FROM Måling";
 			stmt = conn.createStatement();
 			ResultSet rset2 = stmt.executeQuery(sql);
@@ -167,7 +172,6 @@ public class DatabaseConn extends Thread implements Observed {
 	@Override
 	public void detachListener(ActionListener l) {
 		lyttere.remove(l);
-
 	}
 
 	@Override
@@ -181,33 +185,18 @@ public class DatabaseConn extends Thread implements Observed {
 
 	@Override
 	public void run() {
+		System.out.println("Start databasetråd: " + this.getClass().getName());
 		running = true;
 		while (running) {
 			ArrayList<Integer> toDatabase = q.getBuffer();
 			if (toDatabase.size() > 0 && toDatabase != null)
 				this.addData(toDatabase);
 			try {
-				Thread.sleep(200);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {
 				System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			}
 		}
-	}
-
-	// TIL TEST:
-	public static void main(String[] args) throws InterruptedException {
-		DatabaseConn dtb = DatabaseConn.getInstance();
-		/*
-		 * ArrayList<Integer> data = new ArrayList<>(); for(int i = 0; i<10000;
-		 * i++){ data.add(i*10); } dtb.addData(data);
-		 */
-		ArrayList<Integer> out = new ArrayList<>();
-		out = dtb.getData(2);
-		for (int tal : out) {
-			System.out.println(tal);
-		}
-		Thread.sleep(2000);
-		dtb.stopExamination();
 	}
 
 	public void newExamination() {
@@ -234,9 +223,11 @@ public class DatabaseConn extends Thread implements Observed {
 	}
 
 	public ArrayList<Integer> getDataToGraph() {
+		System.out.println("Henter til graf: " + this.getClass().getName());
 		ArrayList<Integer> list = new ArrayList<Integer>();
 		try {
-			String sql = "SELECT værdi FROM måling WHERE type=1 AND idMåling >= "+oldID+" AND idMåling <= "+newID+" ORDER BY idMåling ASC";
+			String sql = "SELECT værdi FROM måling WHERE type=1 AND idMåling > " + oldID + " AND idMåling <= " + newID
+					+ " ORDER BY idMåling ASC";
 			stmt = conn.createStatement();
 			ResultSet rset = stmt.executeQuery(sql);
 			while (rset.next()) {
@@ -247,7 +238,7 @@ public class DatabaseConn extends Thread implements Observed {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			return null;
 		}
-		
+
 	}
 
 }

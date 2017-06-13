@@ -1,10 +1,19 @@
 package main.control;
 
 import java.util.ArrayList;
+
+import main.model.DatabaseConn;
 import main.util.Filter;
 
 public class Calculator {
 	private ArrayList<Double> calcDataset = new ArrayList<>();
+	private DatabaseConn dtb = DatabaseConn.getInstance();
+
+	public Calculator() {
+		dtb.run();
+		dtb.setDaemon(true);
+		dtb.setName("Database tråd");
+	}
 
 	public boolean validateData() {
 		return false;
@@ -21,14 +30,9 @@ public class Calculator {
 		// MATLAB kode:
 		/*
 		 * zcross = 0.0; threshold=0.8; for n= 2:length(y2) pre_sign = -1;
-		 * cur_sign = -1; if 
-		 * y2(n-1)>threshold pre_sign = 1; 
-		 * end 
-		 * if
-		 * y2(n)>threshold cur_sign = 1; 
-		 * end 
-		 * zcross = zcross + abs(cur_sign-pre_sign)/2; 
-		 * end 
+		 * cur_sign = -1; if y2(n-1)>threshold pre_sign = 1; end if
+		 * y2(n)>threshold cur_sign = 1; end zcross = zcross +
+		 * abs(cur_sign-pre_sign)/2; end
 		 * 
 		 * rate = 60/(length(y2)/300)*(zcross/2)
 		 */

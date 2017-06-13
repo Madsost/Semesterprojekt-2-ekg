@@ -8,7 +8,7 @@ import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 
-public class EKGSensor extends Thread implements Sensor {
+public class EKGSensor implements Sensor {
 
 	private Queue queue = Queue.getInstance();
 	private int baudRate = 38400;
@@ -68,7 +68,7 @@ public class EKGSensor extends Thread implements Sensor {
 
 					// we were done with the buffer on the arduino so we return
 					// and stop running
-					
+
 				}
 
 			});
