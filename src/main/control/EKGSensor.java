@@ -1,6 +1,5 @@
 package main.control;
 
-import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
 import jssc.SerialPort;
@@ -15,51 +14,70 @@ public class EKGSensor extends Thread implements Sensor {
 	private int baudRate = 38400;
 	private SerialPort port;
 	private String input = "";
-	private boolean running = false;
 
 	public EKGSensor() {
 		init();
 	}
 
 	public void run() {
-		running = true;
 
-		// if there is is something on the port we want to read it
 		try {
-			if (port.getInputBufferBytesCount() > 0) {
+			// we listen on the Serial port
+			port.addEventListener(new SerialPortEventListener() {
 
-				// put what is on the buffer in a long String
-				input += port.readString();
+				@Override
+				public void serialEvent(SerialPortEvent event) {
+					// if there is is something on the port we want to read it
+					try {
+						if (event.getEventValue() > 0) {
 
-				// while there is someting in the string we read, we extract
-				// values from it
-				while (input.contains("-")) {
-					// if there are null og nothing instead of a value, remove
-					// it
-					if (input.substring(0, input.indexOf("-")).contains("null")
-							|| input.substring(0, input.indexOf("-")).equals("")) {
-						input = input.substring(input.indexOf("-") + 1);
-					}
+							// put what is on the buffer in a long String
+							input += port.readString(event.getEventValue());
 
-					// read the next value, parse it to an int and put it in the
-					// Queue
-					if (!(input.substring(0) == "-")) {
-						try {
-							queue.addToBuffer(Integer.parseInt(input.substring(0, input.indexOf("-"))));
-							// removes the value we just saved to the queue so
-							// we dont read it again
-							input = input.substring(input.indexOf("-") + 1);
-						} catch (NumberFormatException ex) {
-							System.out.println("NFE ved parsing" + ex);
+							// while there is someting in the string we read, we
+							// extract
+							// values from it
+							while (input.contains("-")) {
+								// if there are null og nothing instead of a
+								// value, remove
+								// it
+								if (input.substring(0, input.indexOf("-")).contains("null")
+										|| input.substring(0, input.indexOf("-")).equals("")) {
+									input = input.substring(input.indexOf("-") + 1);
+								}
+
+								// read the next value, parse it to an int and
+								// put it in the Queue
+								if (!(input.substring(0) == "-")) {
+									try {
+										queue.addToBuffer(Integer.parseInt(input.substring(0, input.indexOf("-"))));
+										// removes the value we just saved to
+										// the queue so
+										// we dont read it again
+										input = input.substring(input.indexOf("-") + 1);
+									} catch (NumberFormatException ex) {
+										System.out.println("NFE ved parsing" + ex);
+									}
+								}
+							}
 						}
+					} catch (SerialPortException e) {
+						// TODO Auto-generated catch block
+						System.out.println("Fik ikke læst fra porten ");
+						e.printStackTrace();
 					}
+
+					// we were done with the buffer on the arduino so we return
+					// and stop running
+					
 				}
-			}
+
+			});
 		} catch (SerialPortException e) {
 			// TODO Auto-generated catch block
-			System.out.println("Fik ikke læst fra porten ");
 			e.printStackTrace();
 		}
+
 	}
 
 	@Override
