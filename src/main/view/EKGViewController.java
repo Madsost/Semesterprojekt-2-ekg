@@ -28,10 +28,9 @@ public class EKGViewController implements ActionListener {
 	private static final int MAX_DATA_POINTS = 900;
 	private ConcurrentLinkedQueue<Number> dataQ = new ConcurrentLinkedQueue<>();
 	private int xSeriesData = 0;
-    private XYChart.Series<Number, Number> series = new XYChart.Series<>();
+	private XYChart.Series<Number, Number> series = new XYChart.Series<>();
 	private int latestPulse = 0;
 	private GuiController main = null;
-	//private GraphController graphController = null;
 	private boolean running = false;
 	private boolean appRunning = false;
 	private boolean graphShown = true;
@@ -39,9 +38,11 @@ public class EKGViewController implements ActionListener {
 	@FXML
 	private Label pulseLabel;
 	@FXML
-	private NumberAxis xAxis = new NumberAxis();
+	private AnchorPane graphPane;
 	@FXML
-	private NumberAxis yAxis = new NumberAxis();
+	private final NumberAxis xAxis = new NumberAxis(0, MAX_DATA_POINTS, MAX_DATA_POINTS / 10);
+	@FXML
+	private final NumberAxis yAxis = new NumberAxis();
 	@FXML
 	private LineChart<Number, Number> graph;
 	@FXML
@@ -51,74 +52,72 @@ public class EKGViewController implements ActionListener {
 
 	public EKGViewController() {
 		dtb = DatabaseConn.getInstance();
+		dtb.attachListener(this);
 	}
 
 	@FXML
 	public void initialize() {
 		pulseLabel.setText("--");
-
 		showGraph.setSelected(true);
-		
-		xAxis = new NumberAxis(0, MAX_DATA_POINTS, MAX_DATA_POINTS / 10);
-        xAxis.setForceZeroInRange(false);
-        xAxis.setAutoRanging(false);
-        xAxis.setTickLabelsVisible(false);
-        xAxis.setTickMarkVisible(false);
-        xAxis.setMinorTickVisible(false);
 
-        yAxis = new NumberAxis();
-        
-        graph = new LineChart<Number, Number>(xAxis, yAxis) {
-            // Override to remove symbols on each data point
-            @Override
-            protected void dataItemAdded(Series<Number, Number> series, int itemIndex, Data<Number, Number> item) {
-            }
-        };
+		xAxis.setForceZeroInRange(false);
+		xAxis.setAutoRanging(false);
+		xAxis.setTickLabelsVisible(false);
+		xAxis.setTickMarkVisible(false);
+		xAxis.setMinorTickVisible(false);
 
-        graph.setAnimated(false);
-        graph.setHorizontalGridLinesVisible(true);
-        
-        series.setName("EKG dataserie");
-        
-        graph.getData().addAll(series);
+		graph = new LineChart<Number, Number>(xAxis, yAxis) {
+			// Override to remove symbols on each data point
+			@Override
+			protected void dataItemAdded(Series<Number, Number> series, int itemIndex, Data<Number, Number> item) {
+			}
+		};
+
+		graph.setAnimated(false);
+		graph.setHorizontalGridLinesVisible(true);
+
+		series.setName("EKG dataserie");
+
+		graph.getData().addAll(series);
 	}
-	
-	//-- Timeline gets called in the JavaFX Main thread
-    private void prepareTimeline() {
-        new AnimationTimer() {
-            @Override
-            public void handle(long now) {
-                addDataToSeries();
-            }
-        }.start();
-    }
 
-    private void addDataToSeries() {	
-        for (int i = 0; i < 20; i++) { //-- add 20 numbers to the plot+
-            if (dataQ.isEmpty()) break;
-            series.getData().add(new XYChart.Data<>(xSeriesData++, dataQ.remove()));
-        }
-        // remove points to keep us at no more than MAX_DATA_POINTS
-        if (series.getData().size() > MAX_DATA_POINTS) {
-            series.getData().remove(0, series.getData().size() - MAX_DATA_POINTS);
-        }
-        // update
-        xAxis.setLowerBound(xSeriesData - MAX_DATA_POINTS);
-        xAxis.setUpperBound(xSeriesData - 1);
-    }
+	// -- Timeline gets called in the JavaFX Main thread
+	private void prepareTimeline() {
+		new AnimationTimer() {
+			@Override
+			public void handle(long now) {
+				addDataToSeries();
+			}
+		}.start();
+	}
+
+	private void addDataToSeries() {
+		for (int i = 0; i < 20; i++) { // -- add 20 numbers to the plot+
+			if (dataQ.isEmpty())
+				break;
+			series.getData().add(new XYChart.Data<>(xSeriesData++, dataQ.remove()));
+		}
+		// remove points to keep us at no more than MAX_DATA_POINTS
+		if (series.getData().size() > MAX_DATA_POINTS) {
+			series.getData().remove(0, series.getData().size() - MAX_DATA_POINTS);
+		}
+		// update
+		xAxis.setLowerBound(xSeriesData - MAX_DATA_POINTS);
+		xAxis.setUpperBound(xSeriesData - 1);
+	}
 
 	public void setGuiController(GuiController main) {
 		this.main = main;
 	}
-	
-	private void handleStart(){
+
+	private void handleStart() {
 		dtb.attachListener(this);
 		prepareTimeline();
 	}
-	
-	private void handleStop(){
+
+	private void handleStop() {
 		dtb.detachListener(this);
-		
+
 	}
 
 	@FXML
@@ -141,6 +140,7 @@ public class EKGViewController implements ActionListener {
 			running = false;
 			// dtb.stopExamination();
 			// graphController.stop();
+			handleStop();
 			startStopButton.setText("Start undersøgelse");
 			// main.pause();
 		}
@@ -150,31 +150,32 @@ public class EKGViewController implements ActionListener {
 	private void handleCheckBox() {
 		if (graphShown) {
 			graphShown = false;
-			graph.setVisible(graphShown);
+			graphPane.setVisible(graphShown);
 		} else {
 			graphShown = true;
-			graph.setVisible(graphShown);
+			graphPane.setVisible(graphShown);
 		}
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent event) {
 		String eventCommand = event.getActionCommand();
-		switch(eventCommand){
-		case "Pulse": 
+		switch (eventCommand) {
+		case "Pulse":
 			handleNewPulse();
 			break;
 		case "EKG":
 			addToDataQ();
 			break;
-		default: break;
+		default:
+			break;
 		}
-		
+
 	}
 
 	private void addToDataQ() {
 		ArrayList<Integer> toDataQ = dtb.getDataToGraph();
-		for(int k : toDataQ){
+		for (int k : toDataQ) {
 			dataQ.add(k);
 		}
 	}

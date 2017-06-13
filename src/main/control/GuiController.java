@@ -26,7 +26,7 @@ public class GuiController extends Application {
 		try {
 			this.primaryStage = primaryStage;
 
-			this.primaryStage.setTitle("GUI-Mockup");
+			this.primaryStage.setTitle("GUI");
 
 			initRootLayout();
 
@@ -64,12 +64,15 @@ public class GuiController extends Application {
 			loader.setLocation(MainApp.class.getResource("view/EKGView.FXML"));
 
 			AnchorPane ekgOverview = (AnchorPane) loader.load();
+			
 			rootLayout.setCenter(ekgOverview);
 
 			EKGViewController controller = loader.getController();
 			controller.setGuiController(this);
 
 		} catch (Exception e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			e.printStackTrace();
 		}
 	}
 

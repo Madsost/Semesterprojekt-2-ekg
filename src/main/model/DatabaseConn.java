@@ -62,7 +62,7 @@ public class DatabaseConn extends Thread implements Observed {
 	 */
 	public synchronized void addData(ArrayList<Integer> data) {
 		try {
-			String sql = "SELECT LAST_INSERT_ID() FROM Måling";
+			String sql = "SELECT LAST_INSERT_ID() FROM Måling WHERE TYPE=1";
 			stmt = conn.createStatement();
 			ResultSet rset = stmt.executeQuery(sql);
 			if (rset.next())
@@ -79,8 +79,8 @@ public class DatabaseConn extends Thread implements Observed {
 			sql = "SELECT LAST_INSERT_ID() FROM Måling";
 			stmt = conn.createStatement();
 			ResultSet rset2 = stmt.executeQuery(sql);
-			if (rset.next())
-				newID = rset.getInt(1);
+			if (rset2.next())
+				newID = rset2.getInt(1);
 			notification("EKG");
 		} catch (SQLException e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
@@ -236,7 +236,7 @@ public class DatabaseConn extends Thread implements Observed {
 	public ArrayList<Integer> getDataToGraph() {
 		ArrayList<Integer> list = new ArrayList<Integer>();
 		try {
-			String sql = "SELECT værdi FROM måling WHERE type=1 AND idMåling > "+oldID+" AND idMåling < "+newID+" ORDER BY idMåling ASC";
+			String sql = "SELECT værdi FROM måling WHERE type=1 AND idMåling >= "+oldID+" AND idMåling <= "+newID+" ORDER BY idMåling ASC";
 			stmt = conn.createStatement();
 			ResultSet rset = stmt.executeQuery(sql);
 			while (rset.next()) {

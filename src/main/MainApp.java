@@ -47,7 +47,7 @@ public class MainApp{
 			}
 		};
 		guiThread.start();	
-		init();
+		//init();
 		
 	}
 
