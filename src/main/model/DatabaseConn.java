@@ -27,6 +27,9 @@ public class DatabaseConn extends Thread implements Observed {
 
 	private final String USER = "java";
 	private final String PASS = "1234";
+	
+	private int oldID = 0;
+	private int newID = 0;
 
 	/**
 	 * EKG = 1, PULS = 2.
@@ -59,8 +62,13 @@ public class DatabaseConn extends Thread implements Observed {
 	 */
 	public synchronized void addData(ArrayList<Integer> data) {
 		try {
+			String sql = "SELECT LAST_INSERT_ID() FROM Måling";
+			stmt = conn.createStatement();
+			ResultSet rset = stmt.executeQuery(sql);
+			if (rset.next())
+				oldID = rset.getInt(1);
 			for (int input : data) {
-				String sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES(?,?,"
+				sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES(?,?,"
 						+ activeExamination + ")";
 				pstmt = conn.prepareStatement(sql);
 				pstmt.setInt(1, input);
@@ -68,7 +76,12 @@ public class DatabaseConn extends Thread implements Observed {
 				pstmt.execute();
 				conn.commit();
 			}
-			// notification("EKG");
+			sql = "SELECT LAST_INSERT_ID() FROM Måling";
+			stmt = conn.createStatement();
+			ResultSet rset2 = stmt.executeQuery(sql);
+			if (rset.next())
+				newID = rset.getInt(1);
+			notification("EKG");
 		} catch (SQLException e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 		}
@@ -112,7 +125,6 @@ public class DatabaseConn extends Thread implements Observed {
 				list.add(rset.getInt(1));
 			}
 			return list;
-
 		} catch (SQLException e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			return null;
@@ -219,6 +231,23 @@ public class DatabaseConn extends Thread implements Observed {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 		}
 
+	}
+
+	public ArrayList<Integer> getDataToGraph() {
+		ArrayList<Integer> list = new ArrayList<Integer>();
+		try {
+			String sql = "SELECT værdi FROM måling WHERE type=1 AND idMåling > "+oldID+" AND idMåling < "+newID+" ORDER BY idMåling ASC";
+			stmt = conn.createStatement();
+			ResultSet rset = stmt.executeQuery(sql);
+			while (rset.next()) {
+				list.add(rset.getInt(1));
+			}
+			return list;
+		} catch (SQLException e) {
+			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			return null;
+		}
+		
 	}
 
 }
