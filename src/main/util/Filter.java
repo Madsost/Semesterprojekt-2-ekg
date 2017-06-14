@@ -38,7 +38,7 @@ public class Filter {
 			-0.000491, 0.000161, 0.000583, 0.000509 };
 	private static int length = coeffs.length;
 
-	private static double[] delayLine = new double[length];
+	private static int[] delayLine = new int[length];
 	private static int count;
 
 	/**
@@ -46,19 +46,27 @@ public class Filter {
 	 * @param input
 	 * @return
 	 */
-	public static double doFilter(double input) {
-		// skriv en ny foldnings-algoritme
-		
-		// gammel algoritme
+	public static double doFilter(int input) {
+		// indsæt input på næste plads
 		delayLine[count] = input;
 		double result = 0.0;
+
+		// gennemløb listerne og fold delayLine med coeffs: Sum(x(n-k)*h(n))
 		int index = count;
 		for (int i = 0; i < length; i++) {
-			result += coeffs[i] * delayLine[index--];
+			result += coeffs[i] * delayLine[index];
+			// tæl index ned for at få den omvendte sekvens
+			index--;
+
+			// hvis index er < 0 skal vi fortsætte i max
 			if (index < 0)
 				index = length - 1;
 		}
-		if (++count >= length)
+		// tæl count op, så næste måling kommer ind på næste plads
+		count++;
+
+		// hvis count er større end længden, sættes ind på plads 0.
+		if (count >= length)
 			count = 0;
 		return result;
 	}
