@@ -1,6 +1,5 @@
 package main;
 
-import main.control.Calculator;
 import main.control.EKGSensor;
 import main.control.GuiController;
 import main.control.Sensor;
@@ -18,6 +17,7 @@ public class MainApp {
 	private static void run() {
 		while (running) {
 			boolean examRunning = dtb.isExamRunning();
+			boolean appRunning = dtb.isAppRunning();
 			if (!examRunning && sensorThread.isAlive()) {
 				try {
 					s.pauseThread();
@@ -30,6 +30,10 @@ public class MainApp {
 			} else if (!examRunning && sensorThread.isAlive()) {
 				s.resumeThread();
 			}
+			if (!appRunning) {
+				s.stopConn();
+				System.exit(0);
+			}
 			try {
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {
@@ -39,13 +43,7 @@ public class MainApp {
 	}
 
 	private static void init() {
-		while (!dtb.isAppRunning()) {
-			try {
-				Thread.sleep(200);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
+		dtb.setAppRunning(true);
 		if (testing)
 			s = new TestSensor();
 		// if not test

@@ -14,10 +14,10 @@ public class Queue {
 
 	// insert value from sensor to the end of the buffer
 	// called from sensor to put values in the Queue
-	public synchronized void addToBuffer(int value) {
-		buffer.add(value);
+	public synchronized void addToBuffer(int[] value) {
+		for(int number : value) buffer.add(number);
 		empty = false;
-		//notify(); // **ellers er den pågældende tråd i getBuffer fanget??
+		notify(); // **ellers er den pågældende tråd i getBuffer fanget??
 	}
 
 	// returns and clears the buffer

@@ -6,19 +6,17 @@ import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javafx.animation.AnimationTimer;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.chart.XYChart.Data;
-import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
-import javafx.scene.layout.VBox;
-import main.MainApp;
 import main.control.Calculator;
 import main.control.GuiController;
 import main.model.DatabaseConn;
@@ -45,6 +43,7 @@ public class EKGViewController implements ActionListener {
 	private int ekgCounter = 0;
 
 	private Thread adderThread = null;
+	private Thread calculatorThread = null;
 	private Adder adder = null;
 
 	@FXML
@@ -98,6 +97,131 @@ public class EKGViewController implements ActionListener {
 	}
 
 	/**
+	 * Tidslinjen bliver kaldt i hovedtråden. Opdaterer grafen med 60Hz.
+	 */
+	private void prepareTimeline() {
+		new AnimationTimer() {
+			@Override
+			public void handle(long now) {
+				addDataToSeries();
+			}
+		}.start();
+	}
+
+	private void addDataToSeries() {
+		for (int i = 0; i < 10; i++) {
+			if (dataQ.isEmpty()) {
+				break;
+			}
+			series.getData().add(new XYChart.Data<>(xSeriesData++, dataQ.remove()));
+		}
+
+		// fjerner data for at sikre, at vi ikke når over MAX_DATA_POINTS
+		if (series.getData().size() > MAX_DATA_POINTS) {
+			series.getData().remove(0, series.getData().size() - MAX_DATA_POINTS);
+		}
+		// opdater
+		xAxis.setLowerBound(xSeriesData - MAX_DATA_POINTS);
+		xAxis.setUpperBound(xSeriesData - 1);
+	}
+
+	public void setGuiController(GuiController main) {
+		this.main = main;
+	}
+
+	@FXML
+	private void handleStartStop() {
+		if (!running) {
+			running = true;
+			if (appRunning) {
+				adder.resumeThread();
+				dtb.resumeThread();
+				dtb.setExaminationRunning(true);
+				cal.resumeThread();
+			}
+			if (!appRunning) {
+				adder = new Adder();
+				adderThread = new Thread(adder);
+				adderThread.setDaemon(true);
+				adderThread.start();
+
+				prepareTimeline();
+
+				appRunning = true;
+
+				// start databasetråden
+				dtb.start();
+				dtb.setExaminationRunning(true);
+
+				// start en calculator-tråd
+				calculatorThread = new Thread(cal);
+				calculatorThread.setDaemon(true);
+				calculatorThread.start();
+			}
+			startStopButton.setText("Afslut undersøgelse");
+		} else {
+			running = false;
+			try {
+				adder.pauseThread();
+				startStopButton.setText("Start undersøgelse");
+				dtb.setExaminationRunning(false);
+				dtb.stopExamination();
+				dtb.pauseThread();
+				cal.pauseThread();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	@FXML
+	private void handleCheckBox() {
+		if (graphShown) {
+			graphShown = false;
+			graphPane.setVisible(graphShown);
+		} else {
+			graphShown = true;
+			graphPane.setVisible(graphShown);
+		}
+	}
+
+	@Override
+	public void actionPerformed(ActionEvent event) {
+		String eventCommand = event.getActionCommand();
+		switch (eventCommand) {
+		case "Pulse":
+			handleNewPulse();
+			// System.out.println("Puls - testudskrift" +
+			// this.getClass().getName());
+			break;
+		case "EKG":
+			// System.out.println("EKG - testudskrift: " +
+			// this.getClass().getName());
+			toDataQ.addAll(dtb.getDataToGraph());
+			break;
+		default:
+			break;
+		}
+	}
+
+	public void updatePulse(int newPulse) {
+		Platform.runLater(new Runnable() {
+
+			@Override
+			public void run() {
+				pulseLabel.setText("" + newPulse);
+			}
+		});
+
+	}
+
+	private void handleNewPulse() {
+		latestPulse = dtb.getPulse();
+		// System.out.println("test" + latestPulse);
+		updatePulse(latestPulse);
+	}
+
+	/**
 	 * Hjælpeklasse, der sikrer at data bliver sendt til grafen med den rigtige
 	 * hastighed.
 	 * 
@@ -137,112 +261,6 @@ public class EKGViewController implements ActionListener {
 			running = true;
 		}
 
-	}
-
-	/**
-	 * Tidslinjen bliver kaldt i hovedtråden. Opdaterer grafen med 60Hz.
-	 */
-	private void prepareTimeline() {
-		new AnimationTimer() {
-			@Override
-			public void handle(long now) {
-				addDataToSeries();
-			}
-		}.start();
-	}
-
-	private void addDataToSeries() {
-		for (int i = 0; i < 20; i++) { // -- tilføjer data til grafen
-			if (dataQ.isEmpty()) {
-				break;
-			}
-			series.getData().add(new XYChart.Data<>(xSeriesData++, dataQ.remove()));
-		}
-
-		// fjerner data for at sikre, at vi ikke når over MAX_DATA_POINTS
-		if (series.getData().size() > MAX_DATA_POINTS) {
-			series.getData().remove(0, series.getData().size() - MAX_DATA_POINTS);
-		}
-		// opdater
-		xAxis.setLowerBound(xSeriesData - MAX_DATA_POINTS);
-		xAxis.setUpperBound(xSeriesData - 1);
-	}
-
-	public void setGuiController(GuiController main) {
-		this.main = main;
-	}
-
-	@FXML
-	private void handleStartStop() {
-		if (!running) {
-			running = true;
-
-			// start en calculator-tråd
-
-			if (appRunning) {
-				adder.resumeThread();
-				dtb.resumeThread();
-				dtb.setExaminationRunning(true);
-
-			}
-			if (!appRunning) {
-				adder = new Adder();
-				adderThread = new Thread(adder);
-				adderThread.setDaemon(true);
-				adderThread.start();
-
-				prepareTimeline();
-
-				appRunning = true;
-				dtb.start();
-				dtb.setAppRunning(true);
-				dtb.setExaminationRunning(true);
-			}
-			startStopButton.setText("Afslut undersøgelse");
-		} else {
-			running = false;
-			try {
-				adder.pauseThread();
-				startStopButton.setText("Start undersøgelse");
-				dtb.setExaminationRunning(false);
-				dtb.pauseThread();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-	}
-
-	@FXML
-	private void handleCheckBox() {
-		if (graphShown) {
-			graphShown = false;
-			graphPane.setVisible(graphShown);
-		} else {
-			graphShown = true;
-			graphPane.setVisible(graphShown);
-		}
-	}
-
-	@Override
-	public void actionPerformed(ActionEvent event) {
-		String eventCommand = event.getActionCommand();
-		switch (eventCommand) {
-		case "Pulse":
-			handleNewPulse();
-			System.out.println("Puls - testudskrift" + this.getClass().getName());
-			break;
-		case "EKG":
-			System.out.println("EKG - testudskrift: " + this.getClass().getName());
-			toDataQ.addAll(dtb.getDataToGraph());
-			break;
-		default:
-			break;
-		}
-	}
-
-	private void handleNewPulse() {
-		latestPulse = dtb.getPulse();
-		pulseLabel.setText("" + latestPulse);
 	}
 
 }

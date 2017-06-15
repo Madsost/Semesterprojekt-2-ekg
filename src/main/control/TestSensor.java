@@ -13,7 +13,7 @@ import main.model.DatabaseConn;
 
 public class TestSensor extends Thread implements Sensor {
 	private ArrayList<Integer> dataset = new ArrayList<>();
-	private final String variant = "60";
+	private final String variant = "100";
 	private int count = 0;
 	private boolean running = false;
 	private int toOutputCount = 0;
@@ -66,8 +66,7 @@ public class TestSensor extends Thread implements Sensor {
 				count = 0;
 			outputBuffer[toOutputCount++] = dataset.get(count);
 			if (toOutputCount == 250) {
-				for (int tal : outputBuffer)
-					q.addToBuffer(tal);
+				q.addToBuffer(outputBuffer);
 				outputBuffer = new int[250];
 				toOutputCount = 0;
 			}
@@ -89,6 +88,12 @@ public class TestSensor extends Thread implements Sensor {
 	@Override
 	public void resumeThread() {
 		running = true;
+	}
+
+	@Override
+	public void stopConn() {
+		running = false;
+
 	}
 
 	/*

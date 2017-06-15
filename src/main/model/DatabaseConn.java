@@ -98,13 +98,16 @@ public class DatabaseConn extends Thread implements Observed {
 	 * @param pulse
 	 */
 	public synchronized void addPulse(int pulse) {
+		System.out.println("Gemmer puls ... ");
 		try {
-			String sql = "INSERT INTO måling (værdi, type) VALUES(?,?)";
+			String sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES(?,?,?);";
 			pstmt = conn.prepareStatement(sql);
 			pstmt.setInt(1, pulse);
 			pstmt.setInt(2, 2);
+			pstmt.setInt(3, activeExamination);
 			pstmt.execute();
 			conn.commit();
+
 			notification("Pulse");
 		} catch (SQLException e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
@@ -120,10 +123,12 @@ public class DatabaseConn extends Thread implements Observed {
 	public synchronized ArrayList<Integer> getData(int length) {
 		// fetch "length" numbers of measurement from the
 		// database and put it in an ArrayList
+		System.out.println("Henter ... ");
 
 		ArrayList<Integer> list = new ArrayList<Integer>();
 		try {
-			String sql = "SELECT værdi FROM måling WHERE type=1 ORDER BY idMåling ASC";
+			String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
+					+ " AND idMåling < " + newID + " ORDER BY idMåling ASC LIMIT " + length + ";";
 			stmt = conn.createStatement();
 			ResultSet rset = stmt.executeQuery(sql);
 			while (rset.next()) {
@@ -132,6 +137,7 @@ public class DatabaseConn extends Thread implements Observed {
 			return list;
 		} catch (SQLException e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			e.printStackTrace();
 			return null;
 		}
 	}
@@ -157,10 +163,27 @@ public class DatabaseConn extends Thread implements Observed {
 	 */
 	public synchronized int getPulse() {
 		int pulse = 0;
-
-		// get the pulse from the database
-
-		return pulse;
+		int pulseID = 0;
+		try {
+			// Hent nyeste puls
+			String sql = "SELECT LAST_INSERT_ID() FROM måling WHERE type = 2;";
+			stmt = conn.createStatement();
+			ResultSet rset = stmt.executeQuery(sql);
+			if (rset.next())
+				pulseID = rset.getInt(1);
+			// System.out.println("Puls id: " + pulseID);
+			// get the pulse from the database
+			sql = "SELECT Værdi FROM måling WHERE idMåling = " + pulseID + ";";
+			stmt = conn.createStatement();
+			rset = stmt.executeQuery(sql);
+			if (rset.next())
+				pulse = rset.getInt(1);
+			// System.out.println("Puls fra dtb: " + pulse);
+			return pulse;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return 0;
+		}
 	}
 
 	@Override
@@ -193,29 +216,30 @@ public class DatabaseConn extends Thread implements Observed {
 				try {
 					Thread.sleep(200);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
+			// System.out.println("Forsøger at hente fra buffer ... ");
 			ArrayList<Integer> toDatabase = q.getBuffer();
 			if (toDatabase.size() > 0 && toDatabase != null)
 				this.addData(toDatabase);
+			// System.out.println("Hentet fra buffer!");
 		}
 	}
 
-	public void pauseThread() throws InterruptedException {
+	public synchronized void pauseThread() throws InterruptedException {
 		running = false;
 	}
 
-	public void resumeThread() {
+	public synchronized void resumeThread() {
 		running = true;
 	}
 
-	public void setRunning(boolean value) {
+	public synchronized void setRunning(boolean value) {
 		this.running = value;
 	}
 
-	public void newExamination() {
+	public synchronized void newExamination() {
 		try {
 			System.out.println("Opretter undersøgelse ... ");
 			// hent den aktuelle undersøgelsesID og gem i activeExamination
@@ -238,12 +262,12 @@ public class DatabaseConn extends Thread implements Observed {
 
 	}
 
-	public ArrayList<Integer> getDataToGraph() {
-		System.out.println("Henter til graf: " + this.getClass().getName());
+	public synchronized ArrayList<Integer> getDataToGraph() {
+		// System.out.println("Henter til graf: " + this.getClass().getName());
 		ArrayList<Integer> list = new ArrayList<Integer>();
 		try {
-			String sql = "SELECT værdi FROM måling WHERE type=1 AND idMåling > " + oldID + " AND idMåling <= " + newID
-					+ " ORDER BY idMåling ASC";
+			String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
+					+ " AND idMåling > " + oldID + " AND idMåling <= " + newID + " ORDER BY idMåling ASC";
 			stmt = conn.createStatement();
 			ResultSet rset = stmt.executeQuery(sql);
 			while (rset.next()) {
@@ -256,7 +280,7 @@ public class DatabaseConn extends Thread implements Observed {
 		}
 	}
 
-	public boolean isAppRunning() {
+	public synchronized boolean isAppRunning() {
 		boolean isRunning = false;
 		try {
 			String sql = "SELECT * FROM tilstand WHERE idTilstand = 1;";
@@ -272,7 +296,7 @@ public class DatabaseConn extends Thread implements Observed {
 		}
 	}
 
-	public boolean isExamRunning() {
+	public synchronized boolean isExamRunning() {
 		boolean isRunning = false;
 		try {
 			String sql = "SELECT idTilstand FROM tilstand WHERE idTilstand = 2;";
@@ -289,7 +313,7 @@ public class DatabaseConn extends Thread implements Observed {
 		}
 	}
 
-	public void setExaminationRunning(boolean value) {
+	public synchronized void setExaminationRunning(boolean value) {
 		boolean examRunning = value;
 		try {
 			if (examRunning) {
@@ -301,13 +325,14 @@ public class DatabaseConn extends Thread implements Observed {
 				String sql = "DELETE FROM tilstand WHERE idTilstand = 2";
 				pstmt = conn.prepareStatement(sql);
 				pstmt.execute();
+				conn.commit();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void setAppRunning(boolean value) {
+	public synchronized void setAppRunning(boolean value) {
 		boolean appRunning = value;
 		try {
 			if (appRunning) {
@@ -319,18 +344,11 @@ public class DatabaseConn extends Thread implements Observed {
 				String sql = "DELETE FROM tilstand WHERE idTilstand = 1";
 				pstmt = conn.prepareStatement(sql);
 				pstmt.execute();
+				conn.commit();
 			}
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
 	}
 
-	public static void main(String[] args) {
-		DatabaseConn dtb = DatabaseConn.getInstance();
-		System.out.println(dtb.isExamRunning());
-		dtb.setExaminationRunning(false);
-		System.out.println(dtb.isExamRunning());
-		dtb.setExaminationRunning(true);
-		System.out.println(dtb.isExamRunning());
-	}
 }

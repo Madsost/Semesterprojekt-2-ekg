@@ -1,7 +1,5 @@
 package main.control;
 
-import java.util.ArrayList;
-
 import jssc.SerialPort;
 import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
@@ -47,8 +45,7 @@ public class EKGSensor implements Sensor {
 						try {
 							outputBuffer[toOutputCount++] = Integer.parseInt(input.substring(0, input.indexOf("-")));
 							if (toOutputCount == 250) {
-								for (int tal : outputBuffer)
-									queue.addToBuffer(tal);
+								queue.addToBuffer(outputBuffer);
 								outputBuffer = new int[250];
 								toOutputCount = 0;
 							}
@@ -133,6 +130,17 @@ public class EKGSensor implements Sensor {
 	@Override
 	public void resumeThread() {
 		running = true;
+	}
+
+	@Override
+	public void stopConn() {
+		try {
+			port.closePort();
+		} catch (SerialPortException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+
 	}
 
 }

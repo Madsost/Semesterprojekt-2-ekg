@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import main.model.DatabaseConn;
 import main.util.Filter;
 
-public class Calculator {
+public class Calculator implements Runnable {
 	private ArrayList<Double> calcDataset = new ArrayList<>();
 	private DatabaseConn dtb = DatabaseConn.getInstance();
 
@@ -15,11 +15,10 @@ public class Calculator {
 	private int pre = -1;
 	private int post = -1;
 	private int length = -1;
+	private boolean running = false;
 
 	public Calculator() {
-		dtb.run();
-		dtb.setDaemon(true);
-		dtb.setName("Database tråd");
+
 	}
 
 	public boolean validateData() {
@@ -27,7 +26,7 @@ public class Calculator {
 	}
 
 	public int calculatePulse() {
-		ArrayList<Integer> inputDataset = null; // DatabaseConn.getData(1000);
+		ArrayList<Integer> inputDataset = dtb.getData(1000);
 		int result = 0;
 
 		// Folder alt data fra sættet vi tog fra databasen med vores båndpass
@@ -50,7 +49,7 @@ public class Calculator {
 		length = calcDataset.size();
 
 		// Regner pulsen for det filteret signal
-		for (int n = 1; n <= length; n++) {
+		for (int n = 1; n < length; n++) {
 
 			if (calcDataset.get(n - 1) <= threshold)
 				pre = 1;
@@ -60,9 +59,37 @@ public class Calculator {
 				post = 1;
 			else
 				post = -1;
-			zcross = zcross + Math.abs(pre - post) / 2;
+			zcross = zcross + (Math.abs(pre - post) / 2);
 			result = (int) Math.round(60 * zcross / ((2 * length) / fs));
 		}
 		return result;
+	}
+
+	@Override
+	public void run() {
+		running = true;
+		while (true) {
+			try {
+				while (!running) {
+					Thread.sleep(200);
+				}
+				int pulse = calculatePulse();
+				System.out.println(pulse);
+				dtb.addPulse(pulse);
+
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+
+	}
+
+	public void pauseThread() throws InterruptedException {
+		running = false;
+	}
+
+	public void resumeThread() {
+		running = true;
 	}
 }
