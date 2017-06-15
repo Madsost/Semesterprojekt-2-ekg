@@ -98,6 +98,15 @@ public class EKGViewController implements ActionListener {
 
 		lineChart.getData().addAll(series);
 
+		yAxis.setUpperBound(12000);
+		yAxis.setLowerBound(-4000);
+		yAxis.setAutoRanging(false);
+		yAxis.setTickMarkVisible(false);
+		yAxis.setMinorTickVisible(false);
+		yAxis.setTickLabelsVisible(false);
+		// yAxis.setMinorTickCount(10);
+		// yAxis.setTickUnit(50);
+
 		lineChart.setPrefSize(graphPane.getPrefWidth(), graphPane.getPrefHeight());
 		graphPane.getChildren().add(lineChart);
 		graphPane.setRightAnchor(lineChart, 0.0);
@@ -118,7 +127,7 @@ public class EKGViewController implements ActionListener {
 	}
 
 	private void addDataToSeries() {
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 4; i++) {
 			if (dataQ.isEmpty()) {
 				break;
 			}
@@ -126,9 +135,11 @@ public class EKGViewController implements ActionListener {
 		}
 
 		// fjerner data for at sikre, at vi ikke når over MAX_DATA_POINTS
+
 		if (series.getData().size() > MAX_DATA_POINTS) {
 			series.getData().remove(0, series.getData().size() - MAX_DATA_POINTS);
 		}
+
 		// opdater
 		xAxis.setLowerBound(xSeriesData - MAX_DATA_POINTS);
 		xAxis.setUpperBound(xSeriesData - 1);
@@ -200,21 +211,17 @@ public class EKGViewController implements ActionListener {
 		switch (eventCommand) {
 		case "Pulse":
 			handleNewPulse();
-			// System.out.println("Puls - testudskrift" +
-			// this.getClass().getName());
 			break;
 		case "EKG":
-			// System.out.println("EKG - testudskrift: " +
-			// this.getClass().getName());
 			toDataQ.addAll(dtb.getDataToGraph());
 			break;
 		default:
 			break;
 		}
 	}
-	
+
 	@FXML
-	public void handleShowHistory(){
+	public void handleShowHistory() {
 		main.showHistoryView();
 	}
 
@@ -231,7 +238,6 @@ public class EKGViewController implements ActionListener {
 
 	private void handleNewPulse() {
 		latestPulse = dtb.getPulse();
-		// System.out.println("test" + latestPulse);
 		updatePulse(latestPulse);
 	}
 
@@ -256,7 +262,7 @@ public class EKGViewController implements ActionListener {
 					if (toDataQ.size() > 0 && ekgCounter < toDataQ.size()) {
 						dataQ.add(toDataQ.get(ekgCounter++));
 					}
-					Thread.sleep(4);
+					Thread.sleep(100);
 				}
 
 			} catch (InterruptedException ex) {
