@@ -95,11 +95,4 @@ public class TestSensor extends Thread implements Sensor {
 		running = false;
 
 	}
-
-	/*
-	 * public static void main(String[] args) { Sensor s = new TestSensor();
-	 * Thread sensorThread = new Thread(s); sensorThread.run();
-	 * 
-	 * }
-	 */
 }
