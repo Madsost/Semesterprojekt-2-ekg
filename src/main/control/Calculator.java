@@ -7,7 +7,7 @@ import main.util.Filter;
 public class Calculator implements Runnable {
 	private ArrayList<Double> calcDataset = new ArrayList<>();
 	private DatabaseConn dtb = DatabaseConn.getInstance();
-	
+
 	private int result = -1;
 	private double zcross = 0.0;
 	private double threshold = 8000;
@@ -26,9 +26,8 @@ public class Calculator implements Runnable {
 	}
 
 	public int calculatePulse() {
+
 		ArrayList<Integer> inputDataset = dtb.getData(1000);
-		
-		//Folder alt data fra sættet vi tog fra databasen med vores båndpass filter
 
 		// Folder alt data fra sættet vi tog fra databasen med vores båndpass
 		// filter
@@ -47,7 +46,7 @@ public class Calculator implements Runnable {
 		length = calcDataset.size();
 
 		// Regner pulsen for det filteret signal
-		for (int n = 1; n < length; n++) {
+		for (int n = 1; n <= length; n++) {
 
 			if (calcDataset.get(n - 1) <= threshold)
 				pre = 1;
@@ -57,7 +56,7 @@ public class Calculator implements Runnable {
 				post = 1;
 			else
 				post = -1;
-			zcross = zcross + (Math.abs(pre - post) / 2);
+			zcross = zcross + Math.abs(pre - post) / 2;
 			result = (int) Math.round(60 * zcross / ((2 * length) / fs));
 		}
 		return result;
