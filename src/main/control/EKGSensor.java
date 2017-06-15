@@ -83,8 +83,8 @@ public class EKGSensor implements Sensor {
 		} catch (SerialPortException e) {
 			e.printStackTrace();
 		}
-		
-		// starter en løkke som vi kan styre... 
+
+		// starter en løkke som vi kan styre...
 		while (true) {
 			while (!running) {
 				try {
