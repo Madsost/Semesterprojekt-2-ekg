@@ -116,7 +116,6 @@ public class Calculator implements Runnable {
 				e.printStackTrace();
 			}
 		}
-
 	}
 
 	public void pauseThread() throws InterruptedException {

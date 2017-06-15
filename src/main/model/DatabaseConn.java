@@ -64,7 +64,8 @@ public class DatabaseConn extends Thread implements Observed {
 	 * @param data
 	 */
 	public synchronized void addData(ArrayList<Integer> data) {
-		System.out.println("Tilføj data til database: " + this.getClass().getName());
+		// System.out.println("Tilføj data til database: " +
+		// this.getClass().getName());
 		try {
 			String sql = "SELECT LAST_INSERT_ID() FROM Måling WHERE TYPE=1";
 			stmt = conn.createStatement();
@@ -101,7 +102,7 @@ public class DatabaseConn extends Thread implements Observed {
 	 * @param pulse
 	 */
 	public synchronized void addPulse(int pulse) {
-		System.out.println("Gemmer puls ... ");
+		// System.out.println("Gemmer puls ... ");
 		try {
 			String sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES(?,?,?);";
 			pstmt = conn.prepareStatement(sql);
@@ -111,7 +112,7 @@ public class DatabaseConn extends Thread implements Observed {
 			pstmt.execute();
 			conn.commit();
 
-			// notification("Pulse");
+			notification("Pulse");
 		} catch (SQLException e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 		}
@@ -126,7 +127,7 @@ public class DatabaseConn extends Thread implements Observed {
 	public synchronized ArrayList<Integer> getData(int length) {
 		// fetch "length" numbers of measurement from the
 		// database and put it in an ArrayList
-		System.out.println("Henter ... ");
+		// System.out.println("Henter ... ");
 
 		ArrayList<Integer> list = new ArrayList<Integer>();
 		try {

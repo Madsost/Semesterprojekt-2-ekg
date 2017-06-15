@@ -244,7 +244,6 @@ public class EKGViewController implements ActionListener {
 	 */
 	private class Adder implements Runnable {
 		private boolean running = false;
-		private int counter = 0;
 
 		@Override
 		public void run() {

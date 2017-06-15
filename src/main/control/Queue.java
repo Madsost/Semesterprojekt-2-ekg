@@ -15,15 +15,22 @@ public class Queue {
 	// insert value from sensor to the end of the buffer
 	// called from sensor to put values in the Queue
 	public synchronized void addToBuffer(int[] value) {
-		for(int number : value) buffer.add(number);
+		if (!empty) {
+			try {
+				wait();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		for (int number : value) {
+			buffer.add(number);
+		}
 		empty = false;
-		notify(); // **ellers er den pågældende tråd i getBuffer fanget??
+		notify();
 	}
 
 	// returns and clears the buffer
 	public synchronized ArrayList<Integer> getBuffer() {
-		// System.out.println("Forsøger at hente buffer: " +
-		// this.getClass().getName());
 		// if the buffer is empty, the thread is put to sleep
 		if (empty) {
 			try {
