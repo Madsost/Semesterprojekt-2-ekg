@@ -3,9 +3,12 @@ package main.model;
 import java.awt.event.*;
 import java.awt.event.ActionListener;
 import java.sql.*;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import com.sun.javafx.scene.layout.region.Margins;
 
 import main.control.Observed;
 import main.control.Queue;
@@ -108,7 +111,7 @@ public class DatabaseConn extends Thread implements Observed {
 			pstmt.execute();
 			conn.commit();
 
-			notification("Pulse");
+			// notification("Pulse");
 		} catch (SQLException e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 		}
@@ -211,19 +214,21 @@ public class DatabaseConn extends Thread implements Observed {
 		System.out.println("Start databasetråd: " + this.getClass().getName());
 		newExamination();
 		running = true;
-		while (true) {
-			while (!running) {
-				try {
+		try {
+			while (true) {
+				while (!running) {
+
 					Thread.sleep(200);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+
 				}
+				// System.out.println("Forsøger at hente fra buffer ... ");
+				ArrayList<Integer> toDatabase = q.getBuffer();
+				if (toDatabase.size() > 0 && toDatabase != null)
+					this.addData(toDatabase);
+				Thread.sleep(100);
 			}
-			// System.out.println("Forsøger at hente fra buffer ... ");
-			ArrayList<Integer> toDatabase = q.getBuffer();
-			if (toDatabase.size() > 0 && toDatabase != null)
-				this.addData(toDatabase);
-			// System.out.println("Hentet fra buffer!");
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -350,5 +355,48 @@ public class DatabaseConn extends Thread implements Observed {
 			e.printStackTrace();
 		}
 	}
+
+	public synchronized String getStartTime() {
+		try {
+			String sql = "SELECT DATE_FORMAT(Start,'%H:%i:%s') FROM undersøgelse WHERE idUndersøgelse = "
+					+ activeExamination + ";";
+			stmt = conn.createStatement();
+			ResultSet rset = stmt.executeQuery(sql);
+			String time = "";
+			if (rset.next()) {
+				time = rset.getString(1);
+			}
+			System.out.println(time);
+			return time;
+
+		} catch (SQLException e) {
+
+			return null;
+		}
+	}
+
+	public ArrayList<Integer> getDataToHistory(String startTime) {
+		LocalDate localDate = LocalDate.now();
+		String toSQL = localDate.toString() + " " + startTime;
+		ArrayList<Integer> output = new ArrayList<>();
+		try {
+			String sql = "SELECT * FROM Måling WHERE TIMESTAMP >= '" + toSQL + "' AND Undersøgelse_idUndersøgelse = "
+					+ activeExamination + ";";
+			stmt = conn.createStatement();
+			ResultSet rset = stmt.executeQuery(sql);
+			while (rset.next()) {
+				output.add(rset.getInt(2));
+			}
+			return output;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	/*
+	 * static void main(String[] args) { DatabaseConn dtb =
+	 * DatabaseConn.getInstance(); dtb.getDataToHistory(dtb.getStartTime()); }
+	 */
 
 }

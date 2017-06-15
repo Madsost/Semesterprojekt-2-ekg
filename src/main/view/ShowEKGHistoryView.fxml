@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.LineChart?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ButtonBar?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.text.Font?>
+
+<AnchorPane accessibleRole="CHECK_BOX" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.view.EKGHistoryViewController">
+   <children>
+      <LineChart fx:id="graph" layoutX="5.0" layoutY="34.0" prefHeight="336.0" prefWidth="980.0" title="Tidligere målinger" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+        <xAxis>
+          <NumberAxis side="BOTTOM" fx:id="xAxis" />
+        </xAxis>
+        <yAxis>
+          <NumberAxis fx:id="yAxis" side="LEFT" />
+        </yAxis>
+      </LineChart>
+      <ButtonBar layoutX="800.0" layoutY="347.0" prefHeight="40.0" prefWidth="133.0" AnchorPane.bottomAnchor="14.0" AnchorPane.rightAnchor="14.0">
+         <buttons>
+          <Button fx:id="getData" mnemonicParsing="false" onAction="#handleUpdate" text="Hent" />
+          <Button fx:id="exit" mnemonicParsing="false" onAction="#handleExit" text="Afslut" />
+         </buttons>
+      </ButtonBar>
+      <ButtonBar layoutX="67.0" layoutY="231.0" prefHeight="40.0" prefWidth="200.0" />
+    <Button fx:id="forwardsButton" layoutX="944.0" layoutY="365.0" minWidth="17.0" mnemonicParsing="false" onAction="#handleGraphChangeRight" prefHeight="13.0" text="&gt;" AnchorPane.rightAnchor="25.0" AnchorPane.topAnchor="365.0" />
+    <Button fx:id="backwardsButton" layoutX="25.0" layoutY="365.0" mnemonicParsing="false" onAction="#handleGraphChangeLeft" text="&lt;" AnchorPane.leftAnchor="25.0" AnchorPane.topAnchor="365.0" />
+      <Label layoutX="41.0" layoutY="303.0" text="Start tid" AnchorPane.bottomAnchor="76.0" AnchorPane.leftAnchor="41.0" />
+      <TextField fx:id="inputField" layoutX="27.0" layoutY="330.0" prefHeight="9.0" prefWidth="80.0" AnchorPane.bottomAnchor="39.0" AnchorPane.leftAnchor="27.0" />
+      <Label layoutX="107.0" layoutY="324.0" AnchorPane.leftAnchor="110.0" />
+      <Label layoutX="40.0" layoutY="350.0" text="tt:mm:ss" AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="40.0" />
+      <Label layoutX="462.0" layoutY="428.0" text="Puls:  ">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Label>
+      <Label fx:id="pulseLabel" layoutX="531.0" layoutY="429.0" text="--">
+         <font>
+            <Font size="24.0" />
+         </font>
+      </Label>
+      <Label fx:id="pulseIcon" layoutX="605.0" layoutY="428.0" prefHeight="21.0" prefWidth="20.0" />
+      <Button fx:id="minus" layoutX="469.0" layoutY="365.0" mnemonicParsing="false" onAction="#handleMinus" prefHeight="31.0" prefWidth="31.0" text="-" AnchorPane.bottomAnchor="104.0" />
+      <Button fx:id="plus" layoutX="500.0" layoutY="365.0" mnemonicParsing="false" onAction="#handlePlus" text="+" AnchorPane.bottomAnchor="104.0" />
+      <TextArea editable="false" layoutX="167.0" layoutY="391.0" prefHeight="95.0" prefWidth="200.0" text="Vælg en starttid i boksen&#10;til venstre og tryk på &#10;&quot;hent&quot;.  " wrapText="true" />
+   </children>
+</AnchorPane>

@@ -25,6 +25,43 @@ public class Calculator implements Runnable {
 		return false;
 	}
 
+	public int calculatePulse(ArrayList<Integer> input) {
+
+		ArrayList<Integer> inputDataset = input;
+
+		// Folder alt data fra sættet vi tog fra databasen med vores båndpass
+		// filter
+		for (int data : inputDataset) {
+			calcDataset.add(Filter.doFilter(data));
+		}
+
+		zcross = 0.0;
+		threshold = 8000;
+		fs = 250;
+		pre = -1;
+		post = -1;
+		length = calcDataset.size();
+
+		// sætter længden på sættet indne vi beregner en puls
+		length = calcDataset.size();
+
+		// Regner pulsen for det filteret signal
+		for (int n = 1; n < length; n++) {
+
+			if (calcDataset.get(n - 1) <= threshold)
+				pre = 1;
+			else
+				pre = -1;
+			if (calcDataset.get(n) <= threshold)
+				post = 1;
+			else
+				post = -1;
+			zcross = zcross + (Math.abs(pre - post) / 2);
+			result = (int) Math.round(60 * zcross / ((2 * length) / fs));
+		}
+		return result;
+	}
+
 	public int calculatePulse() {
 
 		ArrayList<Integer> inputDataset = dtb.getData(1000);
@@ -35,18 +72,18 @@ public class Calculator implements Runnable {
 			calcDataset.add(Filter.doFilter(data));
 		}
 
-		double zcross = 0.0;
-		double threshold = 8000;
-		int fs = 250;
-		int pre = -1;
-		int post = -1;
-		int length = calcDataset.size();
+		zcross = 0.0;
+		threshold = 8000;
+		fs = 250;
+		pre = -1;
+		post = -1;
+		length = calcDataset.size();
 
 		// sætter længden på sættet indne vi beregner en puls
 		length = calcDataset.size();
 
 		// Regner pulsen for det filteret signal
-		for (int n = 1; n <= length; n++) {
+		for (int n = 1; n < length; n++) {
 
 			if (calcDataset.get(n - 1) <= threshold)
 				pre = 1;
@@ -56,7 +93,7 @@ public class Calculator implements Runnable {
 				post = 1;
 			else
 				post = -1;
-			zcross = zcross + Math.abs(pre - post) / 2;
+			zcross = zcross + (Math.abs(pre - post) / 2);
 			result = (int) Math.round(60 * zcross / ((2 * length) / fs));
 		}
 		return result;
@@ -71,7 +108,7 @@ public class Calculator implements Runnable {
 					Thread.sleep(200);
 				}
 				int pulse = calculatePulse();
-				System.out.println(pulse);
+				// System.out.println(pulse);
 				dtb.addPulse(pulse);
 
 				Thread.sleep(5000);

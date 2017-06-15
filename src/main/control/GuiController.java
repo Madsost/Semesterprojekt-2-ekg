@@ -5,13 +5,18 @@ import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
+import javafx.scene.image.Image;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 
 import main.MainApp;
 import main.model.DatabaseConn;
+import main.view.EKGHistoryViewController;
 import main.view.EKGViewController;
 import main.view.RootLayoutController;
 
@@ -30,19 +35,12 @@ public class GuiController extends Application {
 			this.primaryStage = primaryStage;
 
 			this.primaryStage.setTitle("GUI");
+			
+			this.primaryStage.getIcons().add(new Image("file:resources/images/cardiogram2.png"));
 
 			initRootLayout();
 
 			showEKGView();
-
-			// Til fejlvisning...
-			/*
-			 * Alert alert = new Alert(AlertType.ERROR);
-			 * alert.setContentText("Hej - der er sket en fejl (ikke");
-			 * alert.setTitle("Titel"); alert.setHeaderText("Overskrift tekst");
-			 * 
-			 * alert.initOwner(primaryStage); alert.showAndWait();
-			 */
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -77,7 +75,13 @@ public class GuiController extends Application {
 			});
 
 		} catch (Exception e) {
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setContentText("Der er sket en fejl: " + e.getMessage());
+			alert.setTitle("Fejl!");
+			alert.setHeaderText("Fejl i 'initialisering'");
 
+			alert.initOwner(primaryStage);
+			alert.showAndWait();
 		}
 	}
 
@@ -94,8 +98,47 @@ public class GuiController extends Application {
 			controller.setGuiController(this);
 
 		} catch (Exception e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setContentText("Der er sket en fejl: " + e.getMessage());
+			alert.setTitle("Fejl!");
+			alert.setHeaderText("Fejl i 'vis oversigt'");
+
+			alert.initOwner(primaryStage);
+			alert.showAndWait();
 			e.printStackTrace();
+		}
+	}
+
+	public void showHistoryView() {
+		try {
+			// load the FMXL file and create a new stage for the popup dialog.
+			FXMLLoader loader = new FXMLLoader();
+			loader.setLocation(MainApp.class.getResource("view/ShowEKGHistoryView.fxml"));
+			AnchorPane page = (AnchorPane) loader.load();
+
+			// create the dialog stage
+			Stage dialogStage = new Stage();
+			dialogStage.setTitle("Hent tidligere målinger");
+			dialogStage.initModality(Modality.WINDOW_MODAL);
+			dialogStage.initOwner(primaryStage);
+			Scene scene = new Scene(page);
+			dialogStage.setScene(scene);
+
+			// set the job into the controller
+			EKGHistoryViewController controller = loader.getController();
+			controller.setDialogStage(dialogStage);
+			controller.setGuiController(this);
+
+			dialogStage.showAndWait();
+		} catch (Exception e) {
+			e.printStackTrace();
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setContentText("Der er sket en fejl: " + e.getLocalizedMessage());
+			alert.setTitle("Fejl!");
+			alert.setHeaderText("Fejl i 'vis historik'");
+
+			alert.initOwner(primaryStage);
+			alert.showAndWait();
 		}
 	}
 }

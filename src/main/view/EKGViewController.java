@@ -16,6 +16,8 @@ import javafx.scene.chart.XYChart.Data;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.AnchorPane;
 import main.control.Calculator;
 import main.control.GuiController;
@@ -49,11 +51,15 @@ public class EKGViewController implements ActionListener {
 	@FXML
 	private Label pulseLabel;
 	@FXML
+	private Label pulseIcon;
+	@FXML
 	private AnchorPane graphPane;
 	@FXML
 	private Button startStopButton;
 	@FXML
 	private CheckBox showGraph;
+	@FXML
+	private Button showHistory;
 
 	public EKGViewController() {
 		dtb = DatabaseConn.getInstance();
@@ -67,6 +73,9 @@ public class EKGViewController implements ActionListener {
 	public void initialize() {
 		pulseLabel.setText("--");
 		showGraph.setSelected(true);
+
+		Image icon = new Image("file:resources/Images/cardiogram.png");
+		pulseIcon.setGraphic(new ImageView(icon));
 
 		xAxis.setForceZeroInRange(false);
 		xAxis.setAutoRanging(false);
@@ -202,6 +211,11 @@ public class EKGViewController implements ActionListener {
 		default:
 			break;
 		}
+	}
+	
+	@FXML
+	public void handleShowHistory(){
+		main.showHistoryView();
 	}
 
 	public void updatePulse(int newPulse) {
