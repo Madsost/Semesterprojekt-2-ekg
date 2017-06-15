@@ -6,6 +6,8 @@ import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
 import javafx.stage.Stage;
@@ -33,17 +35,29 @@ public class GuiController extends Application {
 			initRootLayout();
 
 			showEKGView();
-			
-			// tilføj en eventhandler så alt bliver afsluttet når vinduet lukker.
-			/*this.primaryStage.addEventHandler(new WindowEvent, new EventHandler<WindowEvent>(){
-					
-				@Override
-				public void handle(WindowEvent arg0) {
-					// TODO Auto-generated method stub
-					
-				}
-				
-			});*/
+
+			// tilføj en eventhandler så alt bliver afsluttet når vinduet
+			// lukker.
+			/*
+			 * this.primaryStage.addEventHandler(new WindowEvent, new
+			 * EventHandler<WindowEvent>(){
+			 * 
+			 * @Override public void handle(WindowEvent arg0) { // TODO
+			 * Auto-generated method stub
+			 * 
+			 * }
+			 * 
+			 * });
+			 */
+
+			// Til fejlvisning...
+			/*
+			 * Alert alert = new Alert(AlertType.ERROR);
+			 * alert.setContentText("Hej - der er sket en fejl (ikke");
+			 * alert.setTitle("Titel"); alert.setHeaderText("Overskrift tekst");
+			 * 
+			 * alert.initOwner(primaryStage); alert.showAndWait();
+			 */
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -89,17 +103,4 @@ public class GuiController extends Application {
 			e.printStackTrace();
 		}
 	}
-
-	public void pause() {
-		MainApp.pauseSensor();
-	}
-
-	public void begin() {
-		MainApp.start();
-	}
-
-	public void cont() {
-		MainApp.cont();
-	}
-
 }

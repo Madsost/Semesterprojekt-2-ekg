@@ -16,6 +16,8 @@ public class TestSensor extends Thread implements Sensor {
 	private final String variant = "60";
 	private int count = 0;
 	private boolean running = false;
+	private int toOutputCount = 0;
+	private int[] outputBuffer = new int[250];
 
 	// s�tter instansen op af Queue s� det er den samme som databaseConn tilg�r
 	private Queue q = Queue.getInstance();
@@ -51,10 +53,24 @@ public class TestSensor extends Thread implements Sensor {
 		running = true;
 		System.out.println("Starter sensor-tråd: " + this.getClass().getName());
 
-		while (running) {
+		while (true) {
+			while (!running) {
+				try {
+					Thread.sleep(200);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 			if (count >= dataset.size())
 				count = 0;
-			q.addToBuffer(dataset.get(count));
+			outputBuffer[toOutputCount++] = dataset.get(count);
+			if (toOutputCount == 250) {
+				for (int tal : outputBuffer)
+					q.addToBuffer(tal);
+				outputBuffer = new int[250];
+				toOutputCount = 0;
+			}
 			count++;
 			try {
 				Thread.sleep(4);
@@ -62,6 +78,17 @@ public class TestSensor extends Thread implements Sensor {
 				e.printStackTrace();
 			}
 		}
+	}
+
+	@Override
+	public void pauseThread() throws InterruptedException {
+		running = false;
+
+	}
+
+	@Override
+	public void resumeThread() {
+		running = true;
 	}
 
 	/*

@@ -41,7 +41,7 @@ public class DatabaseConn extends Thread implements Observed {
 			conn.setAutoCommit(false);
 			System.out.println("Forbindelse oprettet til databasen!");
 
-			newExamination();
+			// newExamination();
 
 		} catch (Exception e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
@@ -186,17 +186,33 @@ public class DatabaseConn extends Thread implements Observed {
 	@Override
 	public void run() {
 		System.out.println("Start databasetråd: " + this.getClass().getName());
+		newExamination();
 		running = true;
-		while (running) {
+		while (true) {
+			while (!running) {
+				try {
+					Thread.sleep(200);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
 			ArrayList<Integer> toDatabase = q.getBuffer();
 			if (toDatabase.size() > 0 && toDatabase != null)
 				this.addData(toDatabase);
-			try {
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {
-				System.err.println(e.getClass().getName() + ": " + e.getMessage());
-			}
 		}
+	}
+
+	public void pauseThread() throws InterruptedException {
+		running = false;
+	}
+
+	public void resumeThread() {
+		running = true;
+	}
+
+	public void setRunning(boolean value) {
+		this.running = value;
 	}
 
 	public void newExamination() {
@@ -238,7 +254,83 @@ public class DatabaseConn extends Thread implements Observed {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			return null;
 		}
-
 	}
 
+	public boolean isAppRunning() {
+		boolean isRunning = false;
+		try {
+			String sql = "SELECT * FROM tilstand WHERE idTilstand = 1;";
+			stmt = conn.createStatement();
+			ResultSet rset = stmt.executeQuery(sql);
+			if (rset.next()) {
+				isRunning = (rset.getInt(1) == 1);
+			}
+			return isRunning;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public boolean isExamRunning() {
+		boolean isRunning = false;
+		try {
+			String sql = "SELECT idTilstand FROM tilstand WHERE idTilstand = 2;";
+			stmt = conn.createStatement();
+			ResultSet rset = stmt.executeQuery(sql);
+			if (rset.next()) {
+				isRunning = (rset.getInt(1) == 2);
+			}
+
+			return isRunning;
+		} catch (SQLException e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	public void setExaminationRunning(boolean value) {
+		boolean examRunning = value;
+		try {
+			if (examRunning) {
+				String sql = "INSERT INTO tilstand VALUES (2);";
+				pstmt = conn.prepareStatement(sql);
+				pstmt.execute();
+				conn.commit();
+			} else {
+				String sql = "DELETE FROM tilstand WHERE idTilstand = 2";
+				pstmt = conn.prepareStatement(sql);
+				pstmt.execute();
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void setAppRunning(boolean value) {
+		boolean appRunning = value;
+		try {
+			if (appRunning) {
+				String sql = "INSERT INTO tilstand VALUES (1);";
+				pstmt = conn.prepareStatement(sql);
+				pstmt.execute();
+				conn.commit();
+			} else {
+				String sql = "DELETE FROM tilstand WHERE idTilstand = 1";
+				pstmt = conn.prepareStatement(sql);
+				pstmt.execute();
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public static void main(String[] args) {
+		DatabaseConn dtb = DatabaseConn.getInstance();
+		System.out.println(dtb.isExamRunning());
+		dtb.setExaminationRunning(false);
+		System.out.println(dtb.isExamRunning());
+		dtb.setExaminationRunning(true);
+		System.out.println(dtb.isExamRunning());
+	}
 }

@@ -5,48 +5,57 @@ import main.control.EKGSensor;
 import main.control.GuiController;
 import main.control.Sensor;
 import main.control.TestSensor;
+import main.model.DatabaseConn;
 import javafx.application.Application;
 
 public class MainApp {
 	private static boolean running = false;
-	private static Calculator cal = null;
 	private static Sensor s = null;
 	private static boolean testing = true;
 	private static Thread sensorThread = null;
+	private static DatabaseConn dtb = DatabaseConn.getInstance();
 
 	private static void run() {
-		sensorThread = new Thread(s);
-		sensorThread.setDaemon(true);
-		sensorThread.start();
-		sensorThread.setName("Sensor tråd");
-		cal = new Calculator();
-
 		while (running) {
-			// beregn puls
-
-			// vent
+			boolean examRunning = dtb.isExamRunning();
+			if (!examRunning && sensorThread.isAlive()) {
+				try {
+					s.pauseThread();
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			} else if (examRunning && !sensorThread.isAlive()) {
+				sensorThread.start();
+			} else if (!examRunning && sensorThread.isAlive()) {
+				s.resumeThread();
+			}
+			try {
+				Thread.sleep(1000);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
 		}
 	}
 
 	private static void init() {
-		// if test
+		while (!dtb.isAppRunning()) {
+			try {
+				Thread.sleep(200);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
 		if (testing)
 			s = new TestSensor();
-
 		// if not test
 		else
 			s = new EKGSensor();
-		s.init();
-	}
-
-	public static void start() {
 		running = true;
-
-		run();
-	}
-
-	public static void stop() {
-		running = false;
+		s.init();
+		sensorThread = new Thread(s);
+		sensorThread.setDaemon(true);
+		sensorThread.setName("Sensor tråd");
 	}
 
 	public static void main(String[] args) {
@@ -60,19 +69,6 @@ public class MainApp {
 		init();
 		run();
 	}
-
-	public static void pauseSensor() {
-		try {
-			s.wait();
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-		}
-	}
-
-	public static void cont() {
-		s.notify();
-	}
-
 }
 
 // yolo Dr. Vobs til tjeneste

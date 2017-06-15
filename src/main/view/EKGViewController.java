@@ -19,27 +19,33 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.VBox;
 import main.MainApp;
+import main.control.Calculator;
 import main.control.GuiController;
 import main.model.DatabaseConn;
 
 public class EKGViewController implements ActionListener {
 
 	private DatabaseConn dtb = null;
-	private static final int MAX_DATA_POINTS = 900;
-	private ConcurrentLinkedQueue<Number> dataQ = new ConcurrentLinkedQueue<>();
-	private XYChart.Series<Number, Number> series = new XYChart.Series<>();
-	private LineChart lineChart = null;
+	private Calculator cal = null;
+	private GuiController main = null;
+
+	private static final int MAX_DATA_POINTS = 750;
+	private LineChart<Number, Number> lineChart = null;
 	private NumberAxis xAxis = null;
 	private NumberAxis yAxis = null;
 	private int xSeriesData = 0;
 	private int latestPulse = 0;
-	private GuiController main = null;
+	private ConcurrentLinkedQueue<Number> dataQ = new ConcurrentLinkedQueue<>();
+	private XYChart.Series<Number, Number> series = new XYChart.Series<>();
+	private ArrayList<Integer> toDataQ = new ArrayList<>();
+
 	private boolean running = false;
 	private boolean appRunning = false;
 	private boolean graphShown = true;
-	ArrayList<Integer> toDataQ = new ArrayList<>();
 	private int ekgCounter = 0;
+
 	private Thread adderThread = null;
+	private Adder adder = null;
 
 	@FXML
 	private Label pulseLabel;
@@ -52,8 +58,10 @@ public class EKGViewController implements ActionListener {
 
 	public EKGViewController() {
 		dtb = DatabaseConn.getInstance();
+		cal = new Calculator();
 		xAxis = new NumberAxis(0, MAX_DATA_POINTS, MAX_DATA_POINTS / 10);
 		yAxis = new NumberAxis();
+		dtb.attachListener(this);
 	}
 
 	@FXML
@@ -68,7 +76,7 @@ public class EKGViewController implements ActionListener {
 		xAxis.setMinorTickVisible(false);
 
 		lineChart = new LineChart<Number, Number>(xAxis, yAxis) {
-			// Override to remove symbols on each data point
+			// overskrives, for at fjerne symbol på hver måling
 			@Override
 			protected void dataItemAdded(Series<Number, Number> series, int itemIndex, Data<Number, Number> item) {
 			}
@@ -82,64 +90,80 @@ public class EKGViewController implements ActionListener {
 
 		lineChart.getData().addAll(series);
 
-		/*
-		 * dtb.attachListener(this);
-		 * 
-		 * Adder adder = new Adder(); Thread t1 = new Thread(adder);
-		 * t1.setDaemon(true); t1.start();
-		 * 
-		 * prepareTimeline();
-		 */
-
 		lineChart.setPrefSize(graphPane.getPrefWidth(), graphPane.getPrefHeight());
 		graphPane.getChildren().add(lineChart);
 		graphPane.setRightAnchor(lineChart, 0.0);
 		graphPane.setLeftAnchor(lineChart, 0.0);
+
 	}
 
+	/**
+	 * Hjælpeklasse, der sikrer at data bliver sendt til grafen med den rigtige
+	 * hastighed.
+	 * 
+	 * @author Mads Østergaard
+	 *
+	 */
 	private class Adder implements Runnable {
+		private boolean running = false;
+		private int counter = 0;
+
 		@Override
 		public void run() {
+			running = true;
 			try {
 				while (true) {
+					while (!running) {
+						Thread.sleep(200);
+					}
 					if (toDataQ.size() > 0 && ekgCounter < toDataQ.size()) {
 						dataQ.add(toDataQ.get(ekgCounter++));
 					}
 					Thread.sleep(4);
 				}
+
 			} catch (InterruptedException ex) {
+				System.out.println("afbrudt");
 				return;
 			}
 
 		}
 
+		public void pauseThread() throws InterruptedException {
+			running = false;
+		}
+
+		public void resumeThread() {
+			running = true;
+		}
+
 	}
 
-	// -- Timeline gets called in the JavaFX Main thread
+	/**
+	 * Tidslinjen bliver kaldt i hovedtråden. Opdaterer grafen med 60Hz.
+	 */
 	private void prepareTimeline() {
 		new AnimationTimer() {
 			@Override
 			public void handle(long now) {
-				// System.out.println("animation timer");
 				addDataToSeries();
 			}
 		}.start();
 	}
 
 	private void addDataToSeries() {
-		for (int i = 0; i < 20; i++) { // -- add numbers to the plot+
+		for (int i = 0; i < 20; i++) { // -- tilføjer data til grafen
 			if (dataQ.isEmpty()) {
 				break;
 			}
-			// System.out.println("Dataq ikke tom");
 			series.getData().add(new XYChart.Data<>(xSeriesData++, dataQ.remove()));
 		}
 
-		// remove points to keep us at no more than MAX_DATA_POINTS
+		// fjerner data for at sikre, at vi ikke når over MAX_DATA_POINTS
 		if (series.getData().size() > MAX_DATA_POINTS) {
 			series.getData().remove(0, series.getData().size() - MAX_DATA_POINTS);
 		}
-		// update
+		// opdater
 		xAxis.setLowerBound(xSeriesData - MAX_DATA_POINTS);
 		xAxis.setUpperBound(xSeriesData - 1);
 	}
@@ -152,37 +176,39 @@ public class EKGViewController implements ActionListener {
 	private void handleStartStop() {
 		if (!running) {
 			running = true;
-			dtb.attachListener(this);
+
+			// start en calculator-tråd
+
 			if (appRunning) {
-				// main.cont();
-				adderThread.notify();
-				dtb.newExamination();
-				System.out.println("appRunning sand");
+				adder.resumeThread();
+				dtb.resumeThread();
+				dtb.setExaminationRunning(true);
+
 			}
 			if (!appRunning) {
-				Adder adder = new Adder();
+				adder = new Adder();
 				adderThread = new Thread(adder);
 				adderThread.setDaemon(true);
 				adderThread.start();
 
 				prepareTimeline();
 
-				// main.begin();
 				appRunning = true;
-				System.out.println("appRunning var falsk");
+				dtb.start();
+				dtb.setAppRunning(true);
+				dtb.setExaminationRunning(true);
 			}
 			startStopButton.setText("Afslut undersøgelse");
 		} else {
 			running = false;
-			dtb.stopExamination();
-			dtb.detachListener(this);
 			try {
-				adderThread.wait();
+				adder.pauseThread();
+				startStopButton.setText("Start undersøgelse");
+				dtb.setExaminationRunning(false);
+				dtb.pauseThread();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
-			startStopButton.setText("Start undersøgelse");
-			// main.pause();
 		}
 	}
 
