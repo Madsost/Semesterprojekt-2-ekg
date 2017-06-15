@@ -1,7 +1,6 @@
 package main.control;
 
 import java.util.ArrayList;
-
 import main.model.DatabaseConn;
 import main.util.Filter;
 
@@ -9,8 +8,18 @@ public class Calculator {
 	private ArrayList<Double> calcDataset = new ArrayList<>();
 	private DatabaseConn dtb = DatabaseConn.getInstance();
 
+	private int result = -1;
+	private double zcross = 0.0;
+	private double threshold = 8000;
+	private int fs = 250;
+	private int pre = -1;
+	private int post = -1;
+	private int length = -1;
+
 	public Calculator() {
-		
+		dtb.run();
+		dtb.setDaemon(true);
+		dtb.setName("Database tråd");
 	}
 
 	public boolean validateData() {
@@ -20,6 +29,9 @@ public class Calculator {
 	public int calculatePulse() {
 		ArrayList<Integer> inputDataset = null; // DatabaseConn.getData(1000);
 		int result = 0;
+
+		// Folder alt data fra sættet vi tog fra databasen med vores båndpass
+		// filter
 		for (int data : inputDataset) {
 			calcDataset.add(Filter.doFilter(data));
 		}
@@ -28,18 +40,29 @@ public class Calculator {
 		// MATLAB kode:
 
 		double zcross = 0.0;
-		double threshold = 800;
-		// for(int n = 2; n<)
+		double threshold = 8000;
+		int fs = 250;
+		int pre = -1;
+		int post = -1;
+		int length = calcDataset.size();
 
-		/*
-		 * zcross = 0.0; threshold=0.8; for n= 2:length(y2) pre_sign = -1;
-		 * cur_sign = -1; if y2(n-1)>threshold pre_sign = 1; end if
-		 * y2(n)>threshold cur_sign = 1; end zcross = zcross +
-		 * abs(cur_sign-pre_sign)/2; end
-		 * 
-		 * rate = 60/(length(y2)/300)*(zcross/2)
-		 */
+		// sætter længden på sættet indne vi beregner en puls
+		length = calcDataset.size();
 
+		// Regner pulsen for det filteret signal
+		for (int n = 1; n <= length; n++) {
+
+			if (calcDataset.get(n - 1) <= threshold)
+				pre = 1;
+			else
+				pre = -1;
+			if (calcDataset.get(n) <= threshold)
+				post = 1;
+			else
+				post = -1;
+			zcross = zcross + Math.abs(pre - post) / 2;
+			result = (int) Math.round(60 * zcross / ((2 * length) / fs));
+		}
 		return result;
 	}
 }
