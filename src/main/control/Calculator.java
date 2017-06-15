@@ -7,7 +7,7 @@ import main.util.Filter;
 public class Calculator implements Runnable {
 	private ArrayList<Double> calcDataset = new ArrayList<>();
 	private DatabaseConn dtb = DatabaseConn.getInstance();
-
+	
 	private int result = -1;
 	private double zcross = 0.0;
 	private double threshold = 8000;
@@ -27,16 +27,14 @@ public class Calculator implements Runnable {
 
 	public int calculatePulse() {
 		ArrayList<Integer> inputDataset = dtb.getData(1000);
-		int result = 0;
+		
+		//Folder alt data fra sættet vi tog fra databasen med vores båndpass filter
 
 		// Folder alt data fra sættet vi tog fra databasen med vores båndpass
 		// filter
 		for (int data : inputDataset) {
 			calcDataset.add(Filter.doFilter(data));
 		}
-
-		// z-cross algoritme (Li tan side 369)
-		// MATLAB kode:
 
 		double zcross = 0.0;
 		double threshold = 8000;
