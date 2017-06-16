@@ -23,6 +23,7 @@ import javafx.scene.layout.AnchorPane;
 import main.control.Calculator;
 import main.control.GuiController;
 import main.model.DatabaseConn;
+import main.util.Filter;
 
 /**
  * 
@@ -248,7 +249,11 @@ public class EKGViewController implements ActionListener {
 				break;
 			case "EKG":
 				ArrayList<Integer> temp = dtb.getDataToGraph();
-				dataQ.addAll(temp);
+				ArrayList<Double> temp2 = new ArrayList<>();
+				for (int i : temp) {
+					temp2.add(Filter.doSmooth(i));
+				}
+				dataQ.addAll(temp2);
 				break;
 			default:
 				break;

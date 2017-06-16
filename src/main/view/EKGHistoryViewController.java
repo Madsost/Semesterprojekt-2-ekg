@@ -20,6 +20,7 @@ import javafx.stage.Stage;
 import main.control.Calculator;
 import main.control.GuiController;
 import main.model.DatabaseConn;
+import main.util.Filter;
 
 /**
  * 
@@ -108,10 +109,17 @@ public class EKGHistoryViewController {
 	private void handleUpdate() {
 		try {
 			if (isValidInput()) {
+				ArrayList<Double> toSeriesFloat = new ArrayList<>();
 				toSeries = dtb.getDataToHistory(inputField.getText());
+				
+				// udjævn serie
+				for (int i : toSeries) {
+					toSeriesFloat.add(Filter.doSmooth(i));
+				}
+
 				series.getData().clear();
 				for (int i = 0; i < toSeries.size(); i++) {
-					series.getData().add(new XYChart.Data<>(i, toSeries.get(i)));
+					series.getData().add(new XYChart.Data<>(i, toSeriesFloat.get(i)));
 				}
 				getPulse();
 			}

@@ -37,11 +37,19 @@ public class Filter {
 			-0.001047, -0.000044, 0.000459, 0.000049, -0.000842, -0.001379, -0.001087, -0.000265, 0.000327, 0.000167,
 			-0.000565, -0.001181, -0.001121, -0.000456 };
 	private static int length = coeffs.length;
-
 	private static int[] delayLine = new int[length];
 	private static int count;
 
 	/**
+	 * Savitzky–Golay udjævner-filter
+	 */
+	private static double[] smoothCoeffs = { -2, 3, 6, 7, 6, 3, -2 };
+	private static int smoothLength = smoothCoeffs.length;
+	private static int[] smoothDelayLine = new int[smoothLength];
+	private static int smoothCount;
+
+	/**
+	 * S
 	 * 
 	 * @param input
 	 * @return
@@ -68,6 +76,38 @@ public class Filter {
 		// hvis count er større end længden, sættes ind på plads 0.
 		if (count >= length)
 			count = 0;
+		return result;
+	}
+
+	/**
+	 * 
+	 * @param input
+	 * @return
+	 */
+	public static double doSmooth(int input) {
+		// indsæt input på næste plads
+		smoothDelayLine[smoothCount] = input;
+		double result = 0.0;
+
+		// gennemløb listerne og fold delayLine med coeffs: Sum(x(n-k)*h(n))
+		int index = smoothCount;
+		for (int i = 0; i < smoothLength; i++) {
+			result += smoothCoeffs[i] * smoothDelayLine[index]; // * (1 / 231);
+			// tæl index ned for at få den omvendte sekvens
+			index--;
+
+			// hvis index er < 0 skal vi fortsætte i max
+			if (index < 0)
+				index = smoothLength - 1;
+		}
+		// tæl count op, så næste måling kommer ind på næste plads
+		smoothCount++;
+
+		// hvis count er større end længden, sættes ind på plads 0.
+		if (smoothCount >= smoothLength)
+			smoothCount = 0;
+		// normalisering ( 1/21 ):
+		result *= 0.04761;
 		return result;
 	}
 }
