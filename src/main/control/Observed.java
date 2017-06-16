@@ -2,6 +2,11 @@ package main.control;
 
 import java.awt.event.ActionListener;
 
+/**
+ * 
+ * @author Mads Østergaard
+ *
+ */
 public interface Observed {
 	public void attachListener(ActionListener l);
 	

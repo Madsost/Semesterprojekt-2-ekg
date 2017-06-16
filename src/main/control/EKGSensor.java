@@ -6,6 +6,11 @@ import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
 
+/**
+ * 
+ * @author Mads Østergaard
+ *
+ */
 public class EKGSensor implements Sensor {
 
 	private Queue queue = Queue.getInstance();
@@ -16,10 +21,17 @@ public class EKGSensor implements Sensor {
 	private int[] outputBuffer = new int[250];
 	private boolean running = false;
 
+	/**
+	 * 
+	 */
 	public EKGSensor() {
 		// init();
 	}
 
+	/**
+	 * 
+	 * @param event
+	 */
 	public void measure(SerialPortEvent event) {
 		try {
 			if (event.getEventValue() > 0) {
@@ -65,6 +77,9 @@ public class EKGSensor implements Sensor {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void run() {
 
 		try {
@@ -94,6 +109,9 @@ public class EKGSensor implements Sensor {
 
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void init() {
 		try {
@@ -122,22 +140,30 @@ public class EKGSensor implements Sensor {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void pauseThread() throws InterruptedException {
 		running = false;
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void resumeThread() {
 		running = true;
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void stopConn() {
 		try {
 			port.closePort();
 		} catch (SerialPortException e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 

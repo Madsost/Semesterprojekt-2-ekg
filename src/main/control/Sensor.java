@@ -1,5 +1,10 @@
 package main.control;
 
+/**
+ * 
+ * @author Mads Østergaard
+ *
+ */
 public interface Sensor extends Runnable {
 
 	public void init();

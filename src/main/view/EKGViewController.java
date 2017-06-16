@@ -2,17 +2,18 @@ package main.view;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javafx.animation.AnimationTimer;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.chart.XYChart.Data;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -23,6 +24,11 @@ import main.control.Calculator;
 import main.control.GuiController;
 import main.model.DatabaseConn;
 
+/**
+ * 
+ * @author Mads Østergaard
+ *
+ */
 public class EKGViewController implements ActionListener {
 
 	private DatabaseConn dtb = null;
@@ -34,19 +40,14 @@ public class EKGViewController implements ActionListener {
 	private NumberAxis xAxis = null;
 	private NumberAxis yAxis = null;
 	private int xSeriesData = 0;
-	private int latestPulse = 0;
 	private ConcurrentLinkedQueue<Number> dataQ = new ConcurrentLinkedQueue<>();
 	private XYChart.Series<Number, Number> series = new XYChart.Series<>();
-	private ArrayList<Integer> toDataQ = new ArrayList<>();
 
 	private boolean running = false;
 	private boolean appRunning = false;
 	private boolean graphShown = true;
-	private int ekgCounter = 0;
 
-	private Thread adderThread = null;
 	private Thread calculatorThread = null;
-	private Adder adder = null;
 
 	@FXML
 	private Label pulseLabel;
@@ -61,6 +62,9 @@ public class EKGViewController implements ActionListener {
 	@FXML
 	private Button showHistory;
 
+	/**
+	 * 
+	 */
 	public EKGViewController() {
 		dtb = DatabaseConn.getInstance();
 		cal = new Calculator();
@@ -69,11 +73,15 @@ public class EKGViewController implements ActionListener {
 		dtb.attachListener(this);
 	}
 
+	/**
+	 * 
+	 */
 	@FXML
 	public void initialize() {
 		pulseLabel.setText("--");
 		showGraph.setSelected(true);
 
+		// -- opret icon
 		Image icon = new Image("file:resources/Images/cardiogram.png");
 		pulseIcon.setGraphic(new ImageView(icon));
 
@@ -83,20 +91,15 @@ public class EKGViewController implements ActionListener {
 		xAxis.setTickMarkVisible(false);
 		xAxis.setMinorTickVisible(false);
 
-		lineChart = new LineChart<Number, Number>(xAxis, yAxis) {
-			// overskrives, for at fjerne symbol på hver måling
-			@Override
-			protected void dataItemAdded(Series<Number, Number> series, int itemIndex, Data<Number, Number> item) {
-			}
-		};
+		lineChart = new LineChart<Number, Number>(xAxis, yAxis);
 
+		// -- opsætning af graf
+		lineChart.setCreateSymbols(false);
 		lineChart.setAnimated(false);
 		lineChart.setHorizontalGridLinesVisible(true);
 		lineChart.setAxisSortingPolicy(LineChart.SortingPolicy.NONE);
 
 		series.setName("EKG dataserie");
-
-		lineChart.getData().addAll(series);
 
 		yAxis.setUpperBound(12000);
 		yAxis.setLowerBound(-4000);
@@ -111,7 +114,10 @@ public class EKGViewController implements ActionListener {
 		graphPane.getChildren().add(lineChart);
 		graphPane.setRightAnchor(lineChart, 0.0);
 		graphPane.setLeftAnchor(lineChart, 0.0);
+		graphPane.setBottomAnchor(lineChart, 0.0);
+		graphPane.setTopAnchor(lineChart, 0.0);
 
+		lineChart.getData().addAll(series);
 	}
 
 	/**
@@ -126,6 +132,9 @@ public class EKGViewController implements ActionListener {
 		}.start();
 	}
 
+	/**
+	 * 
+	 */
 	private void addDataToSeries() {
 		for (int i = 0; i < 4; i++) {
 			if (dataQ.isEmpty()) {
@@ -145,55 +154,76 @@ public class EKGViewController implements ActionListener {
 		xAxis.setUpperBound(xSeriesData - 1);
 	}
 
+	/**
+	 * 
+	 * @param main
+	 */
 	public void setGuiController(GuiController main) {
 		this.main = main;
 	}
 
+	/**
+	 * 
+	 */
 	@FXML
 	private void handleStartStop() {
-		if (!running) {
-			running = true;
-			if (appRunning) {
-				adder.resumeThread();
-				dtb.resumeThread();
-				dtb.setExaminationRunning(true);
-				cal.resumeThread();
-			}
-			if (!appRunning) {
-				adder = new Adder();
-				adderThread = new Thread(adder);
-				adderThread.setDaemon(true);
-				adderThread.start();
+		try {
+			if (!running) {
+				running = true;
+				if (appRunning) {
 
-				prepareTimeline();
+					dtb.newExamination();
+					dtb.setExaminationRunning(true);
+					dtb.resumeThread();
 
-				appRunning = true;
+					// fortsæt beregner-tråd
+					cal.resumeThread();
+				}
+				if (!appRunning) {
 
-				// start databasetråden
-				dtb.start();
-				dtb.setExaminationRunning(true);
+					prepareTimeline();
 
-				// start en calculator-tråd
-				calculatorThread = new Thread(cal);
-				calculatorThread.setDaemon(true);
-				calculatorThread.start();
-			}
-			startStopButton.setText("Afslut undersøgelse");
-		} else {
-			running = false;
-			try {
-				adder.pauseThread();
+					appRunning = true;
+
+					// start databasetråden
+					dtb.start();
+					dtb.setExaminationRunning(true);
+
+					// start en calculator-tråd
+					calculatorThread = new Thread(cal);
+					calculatorThread.setDaemon(true);
+					calculatorThread.start();
+				}
+				startStopButton.setText("Afslut undersøgelse");
+			} else {
+				running = false;
+
 				startStopButton.setText("Start undersøgelse");
 				dtb.setExaminationRunning(false);
 				dtb.stopExamination();
 				dtb.pauseThread();
 				cal.pauseThread();
-			} catch (InterruptedException e) {
-				e.printStackTrace();
 			}
+		} catch (InterruptedException e) {
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setTitle("Fejl i " + this.getClass().getSimpleName());
+			alert.setHeaderText("Der skete en fejl! Se detaljerne nedenfor.");
+			alert.setContentText(e.getClass().getName() + ": " + e.getMessage());
+
+			alert.showAndWait();
+		} catch (SQLException e) {
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setTitle("Fejl i " + this.getClass().getSimpleName());
+			alert.setHeaderText("Der skete en fejl! Se detaljerne nedenfor.");
+			alert.setContentText(e.getClass().getName() + ": " + e.getMessage());
+
+			alert.showAndWait();
 		}
 	}
 
+	/**
+	 * 
+	 */
 	@FXML
 	private void handleCheckBox() {
 		if (graphShown) {
@@ -205,26 +235,46 @@ public class EKGViewController implements ActionListener {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void actionPerformed(ActionEvent event) {
-		String eventCommand = event.getActionCommand();
-		switch (eventCommand) {
-		case "Pulse":
-			handleNewPulse();
-			break;
-		case "EKG":
-			toDataQ.addAll(dtb.getDataToGraph());
-			break;
-		default:
-			break;
+		try {
+			String eventCommand = event.getActionCommand();
+			switch (eventCommand) {
+			case "Pulse":
+				handleNewPulse();
+				break;
+			case "EKG":
+				ArrayList<Integer> temp = dtb.getDataToGraph();
+				dataQ.addAll(temp);
+				break;
+			default:
+				break;
+			}
+		} catch (SQLException e) {
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setTitle("Fejl i " + this.getClass().getSimpleName());
+			alert.setHeaderText("Der skete en fejl! Se detaljerne nedenfor.");
+			alert.setContentText(e.getClass().getName() + ": " + e.getMessage());
+
+			alert.showAndWait();
 		}
 	}
 
+	/**
+	 * 
+	 */
 	@FXML
 	public void handleShowHistory() {
 		main.showHistoryView();
 	}
 
+	/**
+	 * 
+	 * @param newPulse
+	 */
 	public void updatePulse(int newPulse) {
 		Platform.runLater(new Runnable() {
 
@@ -236,50 +286,20 @@ public class EKGViewController implements ActionListener {
 
 	}
 
-	private void handleNewPulse() {
-		latestPulse = dtb.getPulse();
-		updatePulse(latestPulse);
-	}
-
 	/**
-	 * Hjælpeklasse, der sikrer at data bliver sendt til grafen med den rigtige
-	 * hastighed.
 	 * 
-	 * @author Mads Østergaard
-	 *
 	 */
-	private class Adder implements Runnable {
-		private boolean running = false;
+	private void handleNewPulse() {
+		try {
+			updatePulse(dtb.getPulse());
+		} catch (SQLException e) {
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setTitle("Fejl i " + this.getClass().getSimpleName());
+			alert.setHeaderText("Der skete en fejl! Se detaljerne nedenfor.");
+			alert.setContentText(e.getClass().getName() + ": " + e.getMessage());
 
-		@Override
-		public void run() {
-			running = true;
-			try {
-				while (true) {
-					while (!running) {
-						Thread.sleep(200);
-					}
-					if (toDataQ.size() > 0 && ekgCounter < toDataQ.size()) {
-						dataQ.add(toDataQ.get(ekgCounter++));
-					}
-					Thread.sleep(100);
-				}
-
-			} catch (InterruptedException ex) {
-				System.out.println("afbrudt");
-				return;
-			}
-
+			alert.showAndWait();
 		}
-
-		public void pauseThread() throws InterruptedException {
-			running = false;
-		}
-
-		public void resumeThread() {
-			running = true;
-		}
-
 	}
 
 }

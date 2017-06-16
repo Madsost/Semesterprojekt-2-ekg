@@ -13,6 +13,11 @@ import com.sun.javafx.scene.layout.region.Margins;
 import main.control.Observed;
 import main.control.Queue;
 
+/**
+ * 
+ * @author Mads Østergaard
+ *
+ */
 public class DatabaseConn extends Thread implements Observed {
 
 	private List<ActionListener> lyttere = new ArrayList<ActionListener>();
@@ -52,6 +57,10 @@ public class DatabaseConn extends Thread implements Observed {
 		}
 	}
 
+	/**
+	 * 
+	 * @return instansen af databaseforbindelsen
+	 */
 	public static DatabaseConn getInstance() {
 		if (instance == null)
 			instance = new DatabaseConn();
@@ -67,12 +76,9 @@ public class DatabaseConn extends Thread implements Observed {
 		// System.out.println("Tilføj data til database: " +
 		// this.getClass().getName());
 		try {
-			String sql = "SELECT LAST_INSERT_ID() FROM Måling WHERE TYPE=1";
-			stmt = conn.createStatement();
-			ResultSet rset = stmt.executeQuery(sql);
-			if (rset.next())
-				oldID = rset.getInt(1);
-			sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES";
+			oldID = newID;
+
+			String sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES";
 			for (int input : data) {
 				sql += "(" + input + ",1," + activeExamination + "),";
 			}
@@ -87,9 +93,13 @@ public class DatabaseConn extends Thread implements Observed {
 
 			sql = "SELECT LAST_INSERT_ID() FROM Måling";
 			stmt = conn.createStatement();
+			stmt.closeOnCompletion();
 			ResultSet rset2 = stmt.executeQuery(sql);
 			if (rset2.next())
 				newID = rset2.getInt(1);
+
+			rset2.close();
+
 			notification("EKG");
 		} catch (SQLException e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
@@ -101,21 +111,17 @@ public class DatabaseConn extends Thread implements Observed {
 	 * 
 	 * @param pulse
 	 */
-	public synchronized void addPulse(int pulse) {
+	public synchronized void addPulse(int pulse) throws SQLException {
 		// System.out.println("Gemmer puls ... ");
-		try {
-			String sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES(?,?,?);";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.setInt(1, pulse);
-			pstmt.setInt(2, 2);
-			pstmt.setInt(3, activeExamination);
-			pstmt.execute();
-			conn.commit();
+		String sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES(?,?,?);";
+		pstmt = conn.prepareStatement(sql);
+		pstmt.setInt(1, pulse);
+		pstmt.setInt(2, 2);
+		pstmt.setInt(3, activeExamination);
+		pstmt.execute();
+		conn.commit();
 
-			notification("Pulse");
-		} catch (SQLException e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-		}
+		notification("Pulse");
 
 	}
 
@@ -124,83 +130,79 @@ public class DatabaseConn extends Thread implements Observed {
 	 * @param length
 	 * @return
 	 */
-	public synchronized ArrayList<Integer> getData(int length) {
+	public synchronized ArrayList<Integer> getData(int length) throws SQLException {
 		// fetch "length" numbers of measurement from the
 		// database and put it in an ArrayList
 		// System.out.println("Henter ... ");
 
 		ArrayList<Integer> list = new ArrayList<Integer>();
-		try {
-			String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
-					+ " AND idMåling < " + newID + " ORDER BY idMåling ASC LIMIT " + length + ";";
-			stmt = conn.createStatement();
-			ResultSet rset = stmt.executeQuery(sql);
-			while (rset.next()) {
-				list.add(rset.getInt(1));
-			}
-			return list;
-		} catch (SQLException e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-			e.printStackTrace();
-			return null;
+		String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
+				+ " AND idMåling < " + newID + " ORDER BY idMåling ASC LIMIT " + length + ";";
+		stmt = conn.createStatement();
+		stmt.closeOnCompletion();
+		ResultSet rset = stmt.executeQuery(sql);
+		while (rset.next()) {
+			list.add(rset.getInt(1));
 		}
+		rset.close();
+		return list;
 	}
 
 	/**
 	 * 
 	 */
-	public synchronized void stopExamination() {
-		try {
-			String sql = "UPDATE Undersøgelse SET slut = now() WHERE idUndersøgelse =" + activeExamination + ";";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.execute();
-			conn.commit();
-
-		} catch (SQLException e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-		}
+	public synchronized void stopExamination() throws SQLException {
+		String sql = "UPDATE Undersøgelse SET slut = now() WHERE idUndersøgelse =" + activeExamination + ";";
+		pstmt = conn.prepareStatement(sql);
+		pstmt.execute();
+		conn.commit();
 	}
 
 	/**
 	 * 
 	 * @return
 	 */
-	public synchronized int getPulse() {
+	public synchronized int getPulse() throws SQLException {
 		int pulse = 0;
 		int pulseID = 0;
-		try {
-			// Hent nyeste puls
-			String sql = "SELECT LAST_INSERT_ID() FROM måling WHERE type = 2;";
-			stmt = conn.createStatement();
-			ResultSet rset = stmt.executeQuery(sql);
-			if (rset.next())
-				pulseID = rset.getInt(1);
-			// System.out.println("Puls id: " + pulseID);
-			// get the pulse from the database
-			sql = "SELECT Værdi FROM måling WHERE idMåling = " + pulseID + ";";
-			stmt = conn.createStatement();
-			rset = stmt.executeQuery(sql);
-			if (rset.next())
-				pulse = rset.getInt(1);
-			// System.out.println("Puls fra dtb: " + pulse);
-			return pulse;
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return 0;
-		}
+		// Hent nyeste puls
+		String sql = "SELECT LAST_INSERT_ID() FROM måling WHERE type = 2;";
+		stmt = conn.createStatement();
+		ResultSet rset = stmt.executeQuery(sql);
+		if (rset.next())
+			pulseID = rset.getInt(1);
+
+		// get the pulse from the database
+		sql = "SELECT Værdi FROM måling WHERE idMåling = " + pulseID + ";";
+		stmt = conn.createStatement();
+		rset = stmt.executeQuery(sql);
+		if (rset.next())
+			pulse = rset.getInt(1);
+		rset.close();
+		// stmt.close();
+		return pulse;
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void attachListener(ActionListener l) {
 		lyttere.add(l);
 
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void detachListener(ActionListener l) {
 		lyttere.remove(l);
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void notification(String string) {
 		ActionEvent event = new ActionEvent(this, 0, string);
@@ -210,10 +212,17 @@ public class DatabaseConn extends Thread implements Observed {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void run() {
 		System.out.println("Start databasetråd: " + this.getClass().getName());
-		newExamination();
+		try {
+			newExamination();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		running = true;
 		try {
 			while (true) {
@@ -233,59 +242,78 @@ public class DatabaseConn extends Thread implements Observed {
 		}
 	}
 
+	/**
+	 * 
+	 * @throws InterruptedException
+	 */
 	public synchronized void pauseThread() throws InterruptedException {
 		running = false;
 	}
 
+	/**
+	 * 
+	 */
 	public synchronized void resumeThread() {
 		running = true;
 	}
 
+	/**
+	 * 
+	 * @param value
+	 */
 	public synchronized void setRunning(boolean value) {
 		this.running = value;
 	}
 
-	public synchronized void newExamination() {
-		try {
-			System.out.println("Opretter undersøgelse ... ");
-			// hent den aktuelle undersøgelsesID og gem i activeExamination
-			String sql = "INSERT INTO Undersøgelse (Start, Slut) VALUES (now(), now());";
-			pstmt = conn.prepareStatement(sql);
-			pstmt.execute();
-			conn.commit();
-			System.out.println("Undersøgelse oprettet!");
+	/**
+	 * 
+	 * @throws SQLException
+	 */
+	public synchronized void newExamination() throws SQLException {
+		System.out.println("Opretter undersøgelse ... ");
+		// hent den aktuelle undersøgelsesID og gem i activeExamination
+		String sql = "INSERT INTO Undersøgelse (Start, Slut) VALUES (now(), now());";
+		pstmt = conn.prepareStatement(sql);
+		pstmt.execute();
+		conn.commit();
+		System.out.println("Undersøgelse oprettet!");
 
-			System.out.println("Henter undersøgelsesID ...");
-			sql = "SELECT LAST_INSERT_ID() FROM Undersøgelse";
-			stmt = conn.createStatement();
-			ResultSet rset = stmt.executeQuery(sql);
-			if (rset.next())
-				activeExamination = rset.getInt(1);
-			System.out.println("UndersøgelsesID hentet!");
-		} catch (SQLException e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-		}
-
+		System.out.println("Henter undersøgelsesID ...");
+		sql = "SELECT LAST_INSERT_ID() FROM Undersøgelse";
+		stmt = conn.createStatement();
+		ResultSet rset = stmt.executeQuery(sql);
+		if (rset.next())
+			activeExamination = rset.getInt(1);
+		System.out.println("UndersøgelsesID hentet!");
 	}
 
-	public synchronized ArrayList<Integer> getDataToGraph() {
+	/**
+	 * 
+	 * @return
+	 * @throws SQLException
+	 */
+	public synchronized ArrayList<Integer> getDataToGraph() throws SQLException {
 		// System.out.println("Henter til graf: " + this.getClass().getName());
 		ArrayList<Integer> list = new ArrayList<Integer>();
-		try {
-			String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
-					+ " AND idMåling > " + oldID + " AND idMåling <= " + newID + " ORDER BY idMåling ASC";
-			stmt = conn.createStatement();
-			ResultSet rset = stmt.executeQuery(sql);
-			while (rset.next()) {
-				list.add(rset.getInt(1));
-			}
-			return list;
-		} catch (SQLException e) {
-			System.err.println(e.getClass().getName() + ": " + e.getMessage());
-			return null;
+		String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
+				+ " AND idMåling > " + oldID + " AND idMåling <= " + newID + " ORDER BY idMåling ASC";
+		stmt = conn.createStatement();
+		ResultSet rset = stmt.executeQuery(sql);
+		stmt.closeOnCompletion();
+		while (rset.next()) {
+			list.add(rset.getInt(1));
 		}
+		rset.close();
+		return list;
 	}
 
+	/**
+	 * Metoden undersøger om der er en undersøgelse igang ved at hente en række
+	 * i tilstandstabellen. </br>
+	 * Hvis rækken findes er der en undersøgelse i gang, hvis ikke er der ikke.
+	 * 
+	 * @return sand hvis undersøgelsen er i gang, falsk hvis den ikke er.
+	 */
 	public synchronized boolean isAppRunning() {
 		boolean isRunning = false;
 		try {
@@ -302,6 +330,13 @@ public class DatabaseConn extends Thread implements Observed {
 		}
 	}
 
+	/**
+	 * Metoden undersøger om der er en undersøgelse igang ved at hente en række
+	 * i tilstandstabellen. </br>
+	 * Hvis rækken findes er der en undersøgelse i gang, hvis ikke er der ikke.
+	 * 
+	 * @return sand hvis undersøgelsen er i gang, falsk hvis den ikke er.
+	 */
 	public synchronized boolean isExamRunning() {
 		boolean isRunning = false;
 		try {
@@ -319,85 +354,107 @@ public class DatabaseConn extends Thread implements Observed {
 		}
 	}
 
-	public synchronized void setExaminationRunning(boolean value) {
+	/**
+	 * Indsætter eller fjerner en række i tilstandstabellen.
+	 * 
+	 * @param value
+	 *            en booleansk værdi. Hvis sand indsættes en række i
+	 *            tilstandstabellen, hvis falsk fjernes den.
+	 */
+	public synchronized void setExaminationRunning(boolean value) throws SQLException {
 		boolean examRunning = value;
-		try {
-			if (examRunning) {
-				String sql = "INSERT INTO tilstand VALUES (2);";
-				pstmt = conn.prepareStatement(sql);
-				pstmt.execute();
-				conn.commit();
-			} else {
-				String sql = "DELETE FROM tilstand WHERE idTilstand = 2";
-				pstmt = conn.prepareStatement(sql);
-				pstmt.execute();
-				conn.commit();
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+		if (examRunning) {
+			String sql = "INSERT INTO tilstand VALUES (2);";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.execute();
+			conn.commit();
+		} else {
+			String sql = "DELETE FROM tilstand WHERE idTilstand = 2";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.execute();
+			conn.commit();
 		}
 	}
 
-	public synchronized void setAppRunning(boolean value) {
+	/**
+	 * Indsætter eller fjerner en række i tilstandstabellen.
+	 * 
+	 * @param value
+	 *            en booleansk værdi. Hvis sand indsættes en række i
+	 *            tilstandstabellen, hvis falsk fjernes den.
+	 */
+	public synchronized void setAppRunning(boolean value) throws SQLException {
 		boolean appRunning = value;
-		try {
-			if (appRunning) {
-				String sql = "INSERT INTO tilstand VALUES (1);";
-				pstmt = conn.prepareStatement(sql);
-				pstmt.execute();
-				conn.commit();
-			} else {
-				String sql = "DELETE FROM tilstand WHERE idTilstand = 1";
-				pstmt = conn.prepareStatement(sql);
-				pstmt.execute();
-				conn.commit();
-			}
-		} catch (SQLException e) {
-			e.printStackTrace();
+
+		if (appRunning) {
+			String sql = "INSERT INTO tilstand VALUES (1);";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.execute();
+			conn.commit();
+		} else {
+			String sql = "DELETE FROM tilstand WHERE idTilstand = 1";
+			pstmt = conn.prepareStatement(sql);
+			pstmt.execute();
+			conn.commit();
 		}
 	}
 
-	public synchronized String getStartTime() {
-		try {
-			String sql = "SELECT DATE_FORMAT(Start,'%H:%i:%s') FROM undersøgelse WHERE idUndersøgelse = "
-					+ activeExamination + ";";
-			stmt = conn.createStatement();
-			ResultSet rset = stmt.executeQuery(sql);
-			String time = "";
-			if (rset.next()) {
-				time = rset.getString(1);
-			}
-			System.out.println(time);
-			return time;
+	/**
+	 * Henter starttidspunktet for den nuværende undersøgelse
+	 * 
+	 * @return starttidspunktet som en streng - format: tt:mm:ss
+	 */
+	public synchronized String getStartTime() throws SQLException {
 
-		} catch (SQLException e) {
-
-			return null;
+		String sql = "SELECT DATE_FORMAT(Start,'%H:%i:%s') FROM undersøgelse WHERE idUndersøgelse = "
+				+ activeExamination + ";";
+		stmt = conn.createStatement();
+		ResultSet rset = stmt.executeQuery(sql);
+		String time = "";
+		if (rset.next()) {
+			time = rset.getString(1);
 		}
+		// System.out.println(time);
+		return time;
+
 	}
 
-	public ArrayList<Integer> getDataToHistory(String startTime) {
+	/**
+	 * Henter data fra databasen fra et starttidspunkt og frem - i samme
+	 * undersøgelse som den kørende.</br>
+	 * 
+	 * Metoden er begrænset til at hente 5000 målinger.
+	 * 
+	 * @param startTime
+	 *            starttidspunktet, hvorfra der skal hentes målinger. Format:
+	 *            tt:mm:ss
+	 * @return en liste med data fra databasen
+	 */
+	public synchronized ArrayList<Integer> getDataToHistory(String startTime) throws SQLException {
 		LocalDate localDate = LocalDate.now();
 		String toSQL = localDate.toString() + " " + startTime;
 		ArrayList<Integer> output = new ArrayList<>();
-		try {
-			String sql = "SELECT * FROM Måling WHERE TIMESTAMP >= '" + toSQL + "' AND Undersøgelse_idUndersøgelse = "
-					+ activeExamination + ";";
-			stmt = conn.createStatement();
-			ResultSet rset = stmt.executeQuery(sql);
-			while (rset.next()) {
-				output.add(rset.getInt(2));
-			}
-			return output;
-		} catch (SQLException e) {
-			e.printStackTrace();
-			return null;
+		String sql = "SELECT * FROM Måling WHERE TIMESTAMP >= '" + toSQL + "' AND Undersøgelse_idUndersøgelse = "
+				+ activeExamination + " LIMIT 5000;";
+		stmt = conn.createStatement();
+		ResultSet rset = stmt.executeQuery(sql);
+		while (rset.next()) {
+			output.add(rset.getInt(2));
 		}
+		return output;
 	}
 
-	/*
-	 * static void main(String[] args) { DatabaseConn dtb =
-	 * DatabaseConn.getInstance(); dtb.getDataToHistory(dtb.getStartTime()); }
+	/**
+	 * 
 	 */
+	public synchronized void stopConn() {
+		try {
+			conn.close();
+			stmt.close();
+			pstmt.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 
 }

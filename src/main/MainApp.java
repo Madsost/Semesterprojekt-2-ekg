@@ -5,8 +5,16 @@ import main.control.GuiController;
 import main.control.Sensor;
 import main.control.TestSensor;
 import main.model.DatabaseConn;
+
+import java.sql.SQLException;
+
 import javafx.application.Application;
 
+/**
+ * 
+ * @author Mads Østergaard
+ *
+ */
 public class MainApp {
 	private static boolean running = false;
 	private static Sensor s = null;
@@ -14,6 +22,9 @@ public class MainApp {
 	private static Thread sensorThread = null;
 	private static DatabaseConn dtb = DatabaseConn.getInstance();
 
+	/**
+	 * 
+	 */
 	private static void run() {
 		while (running) {
 			boolean examRunning = dtb.isExamRunning();
@@ -22,7 +33,6 @@ public class MainApp {
 				try {
 					s.pauseThread();
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			} else if (examRunning && !sensorThread.isAlive()) {
@@ -32,18 +42,26 @@ public class MainApp {
 			}
 			if (!appRunning) {
 				s.stopConn();
+				dtb.stopConn();
 				System.exit(0);
 			}
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(500);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
+	/**
+	 * 
+	 */
 	private static void init() {
-		dtb.setAppRunning(true);
+		try {
+			dtb.setAppRunning(true);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 		if (testing)
 			s = new TestSensor();
 		// if not test
@@ -56,6 +74,10 @@ public class MainApp {
 		sensorThread.setName("Sensor tråd");
 	}
 
+	/**
+	 * 
+	 * @param args
+	 */
 	public static void main(String[] args) {
 		// tråd til GUI
 		Thread guiThread = new Thread() {
@@ -68,5 +90,3 @@ public class MainApp {
 		run();
 	}
 }
-
-// yolo Dr. Vobs til tjeneste

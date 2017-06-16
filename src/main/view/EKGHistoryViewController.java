@@ -1,5 +1,6 @@
 package main.view;
 
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -8,8 +9,6 @@ import javafx.fxml.FXML;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
-import javafx.scene.chart.XYChart.Data;
-import javafx.scene.chart.XYChart.Series;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
@@ -22,6 +21,11 @@ import main.control.Calculator;
 import main.control.GuiController;
 import main.model.DatabaseConn;
 
+/**
+ * 
+ * @author Mads Østergaard
+ *
+ */
 public class EKGHistoryViewController {
 	private GuiController main = null;
 	private Stage dialogStage = null;
@@ -59,38 +63,74 @@ public class EKGHistoryViewController {
 	private Calculator cal = new Calculator();
 	private ArrayList<Integer> toSeries = null;
 
+	/**
+	 * 
+	 */
 	public EKGHistoryViewController() {
 
 	}
 
+	/**
+	 * 
+	 */
 	@FXML
 	public void initialize() {
-		inputField.setText(dtb.getStartTime());
-		Image icon = new Image("file:resources/Images/cardiogram.png");
-		pulseIcon.setGraphic(new ImageView(icon));
+		try {
+			inputField.setText(dtb.getStartTime());
+			Image icon = new Image("file:resources/Images/cardiogram.png");
+			pulseIcon.setGraphic(new ImageView(icon));
 
-		graph.getXAxis().setAutoRanging(false);
+			graph.getXAxis().setAutoRanging(false);
 
-		xAxis.setUpperBound(MAX_DATA_POINTS);
-		xAxis.setLowerBound(0.0);
+			xAxis.setUpperBound(MAX_DATA_POINTS);
+			xAxis.setLowerBound(0.0);
 
-		graph.getData().addAll(series);
-		graph.setAnimated(false);
-		graph.setCreateSymbols(false);
-	}
+			int seconds = MAX_DATA_POINTS / 250;
+			series.setName(seconds + " sekunders målinger");
 
-	@FXML
-	private void handleUpdate() {
-		if (isValidInput()) {
-			toSeries = dtb.getDataToHistory(inputField.getText());
-			series.getData().clear();
-			for (int i = 0; i < toSeries.size(); i++) {
-				series.getData().add(new XYChart.Data<>(i, toSeries.get(i)));
-			}
-			getPulse();
+			graph.getData().addAll(series);
+			graph.setAnimated(false);
+			graph.setCreateSymbols(false);
+		} catch (SQLException e) {
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setTitle("Fejl i " + this.getClass().getSimpleName());
+			alert.setHeaderText("Der skete en fejl! Se detaljerne nedenfor.");
+			alert.setContentText(e.getClass().getName() + ": " + e.getMessage());
+
+			alert.showAndWait();
 		}
 	}
 
+	/**
+	 * 
+	 */
+	@FXML
+	private void handleUpdate() {
+		try {
+			if (isValidInput()) {
+				toSeries = dtb.getDataToHistory(inputField.getText());
+				series.getData().clear();
+				for (int i = 0; i < toSeries.size(); i++) {
+					series.getData().add(new XYChart.Data<>(i, toSeries.get(i)));
+				}
+				getPulse();
+			}
+		} catch (SQLException e) {
+			Alert alert = new Alert(AlertType.ERROR);
+			alert.setTitle("Fejl i " + this.getClass().getSimpleName());
+			alert.setHeaderText("Der skete en fejl! Se detaljerne nedenfor.");
+			alert.setContentText(e.getClass().getName() + ": " + e.getMessage());
+
+			// e.printStackTrace();
+
+			alert.showAndWait();
+		}
+	}
+
+	/**
+	 * 
+	 * @return
+	 */
 	private boolean isValidInput() {
 		// giver 24-timers mønster i formen tt:mm:ss
 		String timeMatcher = "([01]?[0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]";
@@ -117,11 +157,17 @@ public class EKGHistoryViewController {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	@FXML
 	private void handleExit() {
 		dialogStage.close();
 	}
 
+	/**
+	 * 
+	 */
 	@FXML
 	private void handleGraphChangeRight() {
 		counter = 100;
@@ -129,23 +175,35 @@ public class EKGHistoryViewController {
 		xAxis.setUpperBound(xAxis.getUpperBound() + counter);
 	}
 
+	/**
+	 * 
+	 */
 	@FXML
 	private void handleGraphChangeLeft() {
-		if (counter == 0)
-			return;
 		counter = -100;
 		xAxis.setLowerBound(xAxis.getLowerBound() + counter);
 		xAxis.setUpperBound(xAxis.getUpperBound() + counter);
 	}
 
+	/**
+	 * 
+	 * @param main
+	 */
 	public void setGuiController(GuiController main) {
 		this.main = main;
 	}
 
+	/**
+	 * 
+	 * @param dialogStage
+	 */
 	public void setDialogStage(Stage dialogStage) {
 		this.dialogStage = dialogStage;
 	}
 
+	/**
+	 * 
+	 */
 	@FXML
 	private void handlePlus() {
 		zoomCounter = 100;
@@ -153,15 +211,19 @@ public class EKGHistoryViewController {
 		xAxis.setUpperBound(xAxis.getUpperBound() - zoomCounter);
 	}
 
+	/**
+	 * 
+	 */
 	@FXML
 	private void handleMinus() {
-		if (zoomCounter == 0)
-			return;
-		counter = -100;
-		xAxis.setLowerBound(xAxis.getLowerBound() - zoomCounter);
-		xAxis.setUpperBound(xAxis.getUpperBound() + zoomCounter);
+		zoomCounter = -100;
+		xAxis.setLowerBound(xAxis.getLowerBound() + zoomCounter);
+		xAxis.setUpperBound(xAxis.getUpperBound() - zoomCounter);
 	}
 
+	/**
+	 * 
+	 */
 	private void getPulse() {
 		pulseLabel.setText("" + cal.calculatePulse(toSeries));
 	}

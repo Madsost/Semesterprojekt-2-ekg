@@ -1,16 +1,15 @@
 package main.control;
 
-import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.Scanner;
-
-import main.MainApp;
-import main.model.DatabaseConn;
-
+/**
+ * 
+ * @author Mads Østergaard
+ *
+ */
 public class TestSensor extends Thread implements Sensor {
 	private ArrayList<Integer> dataset = new ArrayList<>();
 	private final String variant = "100";
@@ -19,9 +18,12 @@ public class TestSensor extends Thread implements Sensor {
 	private int toOutputCount = 0;
 	private int[] outputBuffer = new int[250];
 
-	// s�tter instansen op af Queue s� det er den samme som databaseConn tilg�r
+	// sætter instansen op af Queue så det er den samme som databaseConn tilgår
 	private Queue q = Queue.getInstance();
 
+	/**
+	 * 
+	 */
 	@Override
 	public void init() {
 		System.out.println("Opsætter testsensor: " + this.getClass().getName());
@@ -49,6 +51,9 @@ public class TestSensor extends Thread implements Sensor {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	public void run() {
 		running = true;
 		System.out.println("Starter sensor-tråd: " + this.getClass().getName());
@@ -79,20 +84,28 @@ public class TestSensor extends Thread implements Sensor {
 		}
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void pauseThread() throws InterruptedException {
 		running = false;
 
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void resumeThread() {
 		running = true;
 	}
 
+	/**
+	 * 
+	 */
 	@Override
 	public void stopConn() {
 		running = false;
-
 	}
 }
