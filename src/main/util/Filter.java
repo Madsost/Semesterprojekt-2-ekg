@@ -47,6 +47,7 @@ public class Filter {
 	private static int smoothLength = smoothCoeffs.length;
 	private static int[] smoothDelayLine = new int[smoothLength];
 	private static int smoothCount;
+	private static double normalize = 1.0/21.0;
 
 	/**
 	 * S
@@ -107,7 +108,8 @@ public class Filter {
 		if (smoothCount >= smoothLength)
 			smoothCount = 0;
 		// normalisering ( 1/21 ):
-		result *= 0.04761;
+		result *= normalize;
 		return result;
 	}
+
 }
