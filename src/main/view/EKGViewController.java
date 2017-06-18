@@ -69,7 +69,7 @@ public class EKGViewController implements ActionListener {
 	public EKGViewController() {
 		dtb = DatabaseConn.getInstance();
 		cal = new Calculator();
-		xAxis = new NumberAxis(0, MAX_DATA_POINTS, MAX_DATA_POINTS / 10);
+		xAxis = new NumberAxis(0, MAX_DATA_POINTS, 50);
 		yAxis = new NumberAxis();
 		dtb.attachListener(this);
 	}
@@ -86,13 +86,17 @@ public class EKGViewController implements ActionListener {
 		Image icon = new Image("file:resources/Images/cardiogram.png");
 		pulseIcon.setGraphic(new ImageView(icon));
 
+		// -- opsætning af x-akse
 		xAxis.setForceZeroInRange(false);
 		xAxis.setAutoRanging(false);
 		xAxis.setTickLabelsVisible(false);
-		xAxis.setTickMarkVisible(false);
-		xAxis.setMinorTickVisible(false);
+		xAxis.setTickMarkVisible(true);
+		xAxis.setMinorTickCount(10);
+		xAxis.setMinorTickVisible(true);
 
+		// -- oprettelse af grafen
 		lineChart = new LineChart<Number, Number>(xAxis, yAxis);
+		lineChart.setVerticalGridLinesVisible(true);
 
 		// -- opsætning af graf
 		lineChart.setCreateSymbols(false);
@@ -102,22 +106,24 @@ public class EKGViewController implements ActionListener {
 
 		series.setName("EKG dataserie");
 
-		yAxis.setUpperBound(12000);
-		yAxis.setLowerBound(-4000);
-		yAxis.setAutoRanging(false);
-		yAxis.setTickMarkVisible(false);
+		// -- opsætning af y-akse
+		yAxis.setAutoRanging(true);
+		yAxis.setMinorTickCount(100);
+		yAxis.setTickMarkVisible(true);
 		yAxis.setMinorTickVisible(false);
-		yAxis.setTickLabelsVisible(false);
-		// yAxis.setMinorTickCount(10);
-		// yAxis.setTickUnit(50);
+		yAxis.setTickLabelsVisible(true);
 
+		// -- indsæt grafen i graphPane (et anchor-pane)
 		lineChart.setPrefSize(graphPane.getPrefWidth(), graphPane.getPrefHeight());
 		graphPane.getChildren().add(lineChart);
+
+		// -- lad grafen følge med graphPane
 		graphPane.setRightAnchor(lineChart, 0.0);
 		graphPane.setLeftAnchor(lineChart, 0.0);
 		graphPane.setBottomAnchor(lineChart, 0.0);
 		graphPane.setTopAnchor(lineChart, 0.0);
 
+		// -- tilføj dataserien til grafen
 		lineChart.getData().addAll(series);
 	}
 
@@ -137,6 +143,8 @@ public class EKGViewController implements ActionListener {
 	 * 
 	 */
 	private void addDataToSeries() {
+		// -- tilføj 4 datapunkter til serien (opdateres med 60 Hz, svarer til
+		// hastighed på 240 Hz)
 		for (int i = 0; i < 4; i++) {
 			if (dataQ.isEmpty()) {
 				break;
@@ -144,13 +152,12 @@ public class EKGViewController implements ActionListener {
 			series.getData().add(new XYChart.Data<>(xSeriesData++, dataQ.remove()));
 		}
 
-		// fjerner data for at sikre, at vi ikke når over MAX_DATA_POINTS
-
+		// -- fjerner data for at sikre, at vi ikke når over MAX_DATA_POINTS
 		if (series.getData().size() > MAX_DATA_POINTS) {
 			series.getData().remove(0, series.getData().size() - MAX_DATA_POINTS);
 		}
 
-		// opdater
+		// -- opdater
 		xAxis.setLowerBound(xSeriesData - MAX_DATA_POINTS);
 		xAxis.setUpperBound(xSeriesData - 1);
 	}
