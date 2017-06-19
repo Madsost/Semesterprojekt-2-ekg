@@ -36,7 +36,21 @@ public class EKGSensor implements Sensor {
 	public void measure(SerialPortEvent event) {
 		try {
 			if (event.getEventValue() > 0) {
-
+				// -------- NY KODE ------- // 
+				// Kode jeg skrev til kursusopgaven, den burde gøre det rigtigt... 
+				input += port.readString(event.getEventValue());
+				int pos = -1;
+				while ((pos = input.indexOf(split)) > -1) {
+					outputBuffer[toOutputCount++] = Double.parseDouble(input.substring(0, pos));
+					if (toOutputCount == 250) {
+						queue.addToBuffer(outputBuffer);
+						outputBuffer = new double[250];
+						toOutputCount = 0;
+					}
+					input = input.substring(pos + 1);
+				}
+				// ------ SLUT NY KODE ----// 
+				/*
 				// put what is on the buffer in a String
 				input += port.readString(event.getEventValue());
 
@@ -68,7 +82,7 @@ public class EKGSensor implements Sensor {
 						input = input.substring(input.indexOf(split) + 1);
 
 					}
-				}
+				}*/
 			}
 		} catch (SerialPortException e) {
 			System.out.println("Fik ikke læst fra porten ");
