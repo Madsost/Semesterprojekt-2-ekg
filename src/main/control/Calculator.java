@@ -20,7 +20,7 @@ public class Calculator implements Runnable {
 
 	private int result = -1;
 	private double zcross = 0.0;
-	private double threshold = 8000;
+	private double threshold = 500;
 	private int fs = 250;
 	private int pre = -1;
 	private int post = -1;
@@ -50,8 +50,6 @@ public class Calculator implements Runnable {
 		}
 
 		zcross = 0.0;
-		threshold = 500;
-		fs = 250;
 		pre = -1;
 		post = -1;
 
@@ -83,44 +81,54 @@ public class Calculator implements Runnable {
 		try {
 			calcDataset = new ArrayList<>();
 			ArrayList<Double> inputDataset = dtb.getData(1250);
+			if (inputDataset == null || inputDataset.size() == 0) {
+				return -1;
+			}
 
 			// Folder alt data fra sættet vi tog fra databasen med vores
 			// båndpass
 			// filter
 			for (double data : inputDataset) {
-				calcDataset.add(Filter.doFilter(data));
+				double temp = Filter.doFilter(data);
+				calcDataset.add(temp);
 			}
 
-			zcross = 0.0;
-			threshold = 500;
-			fs = 250;
-			pre = -1;
-			post = -1;
-			length = calcDataset.size();
+			double max = 0;
+			for (double data : calcDataset) {
+				max = (data > max) ? data : max;
+			}
+
+			threshold = 0.8 * max;
+			System.out.println(threshold);
 
 			// sætter længden på sættet inden vi beregner en puls
 			length = calcDataset.size();
+			System.out.println(length);
 
-			// Regner pulsen for det filteret signal
-			for (int n = 1; n < length; n++) {
+			zcross = 0.0;
 
-				if (calcDataset.get(n - 1) <= threshold)
+			for (int n = 1; n < length; n++)
+
+			{
+				pre = -1;
+				post = -1;
+				if (calcDataset.get(n - 1) > threshold)
 					pre = 1;
-				else
-					pre = -1;
-				if (calcDataset.get(n) <= threshold)
+				if (calcDataset.get(n) > threshold)
 					post = 1;
-				else
-					post = -1;
-				zcross = zcross + (Math.abs(pre - post) / 2);
-				result = (int) Math.round(60 * zcross / ((2 * length) / fs));
+				zcross += (Math.abs(pre - post) / 2);
+				System.out.println("\tZCROSS: " + zcross);
 			}
+			result = (int) (60 * zcross / (4 * length / 250));
+			System.out.println(result);
 			return result;
 		} catch (SQLException e) {
 			e.printStackTrace();
 			return -1;
 		}
 	}
+
+	// pre = -1; // post = -1; result = 0;
 
 	/**
 	 * 
@@ -138,7 +146,7 @@ public class Calculator implements Runnable {
 					dtb.addPulse(pulse);
 				}
 
-				Thread.sleep(5000);
+				Thread.sleep(4000);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			} catch (SQLException e) {

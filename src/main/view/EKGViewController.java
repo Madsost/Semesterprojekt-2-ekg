@@ -177,7 +177,7 @@ public class EKGViewController implements ActionListener {
 
 	private void addDataToSeries() {
 		int count = (dataQ.size() > 500) ? 3 : 2;
-		count = 2;
+		count = 4;
 		for (int i = 0; i < count; i++) {
 
 			if (dataQ.isEmpty()) {

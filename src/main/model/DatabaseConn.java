@@ -67,9 +67,9 @@ public class DatabaseConn extends Thread implements Observed {
 		return instance;
 	}
 
-	 
 	/**
 	 * put the raw data from the sensor in the database
+	 * 
 	 * @param data
 	 */
 	public synchronized void addData(ArrayList<Double> data) {
@@ -131,20 +131,17 @@ public class DatabaseConn extends Thread implements Observed {
 	 * @return
 	 */
 	public synchronized ArrayList<Double> getData(int length) throws SQLException {
-		// fetch "length" numbers of measurement from the
-		// database and put it in an ArrayList
-		// System.out.println("Henter ... ");
 
 		ArrayList<Double> list = new ArrayList<>();
 		String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
-				+ " AND idMåling < " + newID + " ORDER BY idMåling ASC LIMIT " + length + ";";
+				+ " AND idMåling < " + newID + " ORDER BY idMåling desc LIMIT " + length + ";";
 		stmt = conn.createStatement();
-		stmt.closeOnCompletion();
+		// stmt.closeOnCompletion();
 		ResultSet rset = stmt.executeQuery(sql);
 		while (rset.next()) {
 			list.add(rset.getDouble(1));
 		}
-		rset.close();
+		// rset.close();
 		return list;
 	}
 
@@ -216,7 +213,7 @@ public class DatabaseConn extends Thread implements Observed {
 	 * 
 	 */
 	@Override
-	public  void run() {
+	public void run() {
 		System.out.println("Start databasetråd: " + this.getClass().getName());
 		try {
 			newExamination();
@@ -293,8 +290,8 @@ public class DatabaseConn extends Thread implements Observed {
 	 * @throws SQLException
 	 */
 	public synchronized ArrayList<Double> getDataToGraph() throws SQLException {
-//		long t1 = System.currentTimeMillis();
-//		System.out.println("Henter til graf!");
+		// long t1 = System.currentTimeMillis();
+		// System.out.println("Henter til graf!");
 		// System.out.println("Henter til graf: " + this.getClass().getName());
 		ArrayList<Double> list = new ArrayList<>();
 		String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
@@ -306,8 +303,8 @@ public class DatabaseConn extends Thread implements Observed {
 			list.add(rset.getDouble(1));
 		}
 		rset.close();
-//		long t2 = System.currentTimeMillis();
-//		System.out.println("Returnerer: "+(t2-t1));
+		// long t2 = System.currentTimeMillis();
+		// System.out.println("Returnerer: "+(t2-t1));
 		return list;
 	}
 

@@ -14,7 +14,7 @@ import jssc.SerialPortList;
 public class EKGSensor implements Sensor {
 
 	private Queue queue = Queue.getInstance();
-	private int baudRate = 38400;
+	private int baudRate = 19200;
 	private SerialPort port;
 	private String input = "";
 	private int toOutputCount = 0;
