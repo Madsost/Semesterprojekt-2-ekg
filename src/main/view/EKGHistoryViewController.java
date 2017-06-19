@@ -62,7 +62,7 @@ public class EKGHistoryViewController {
 	private int counter = 0;
 	private int zoomCounter = 0;
 	private Calculator cal = new Calculator();
-	private ArrayList<Integer> toSeries = null;
+	private ArrayList<Double> toSeries = null;
 
 	/**
 	 * 
@@ -109,17 +109,17 @@ public class EKGHistoryViewController {
 	private void handleUpdate() {
 		try {
 			if (isValidInput()) {
-				ArrayList<Double> toSeriesFloat = new ArrayList<>();
-				toSeries = dtb.getDataToHistory(inputField.getText());
-				
+				toSeries = new ArrayList<>();
+				ArrayList<Double> temp = dtb.getDataToHistory(inputField.getText());
+
 				// udjævn serie
-				for (int i : toSeries) {
-					toSeriesFloat.add(Filter.doSmooth(i));
+				for (double i : temp) {
+					toSeries.add(Filter.doSmooth(i));
 				}
 
 				series.getData().clear();
 				for (int i = 0; i < toSeries.size(); i++) {
-					series.getData().add(new XYChart.Data<>(i, toSeriesFloat.get(i)));
+					series.getData().add(new XYChart.Data<>(i, toSeries.get(i)));
 				}
 				getPulse();
 			}

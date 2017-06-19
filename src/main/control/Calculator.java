@@ -36,37 +36,36 @@ public class Calculator implements Runnable {
 
 	/**
 	 * 
-	 * @param input
+	 * @param toSeries
 	 * @return
 	 */
-	public int calculatePulse(ArrayList<Integer> input) {
-
-		ArrayList<Integer> inputDataset = input;
+	public int calculatePulse(ArrayList<Double> toSeries) {
+		ArrayList<Double> calcDataset2 = new ArrayList<>();
+		ArrayList<Double> inputDataset = toSeries;
 
 		// Folder alt data fra sættet vi tog fra databasen med vores båndpass
 		// filter
-		for (int data : inputDataset) {
-			calcDataset.add(Filter.doFilter(data));
+		for (double data : inputDataset) {
+			calcDataset2.add(Filter.doFilter(data));
 		}
 
 		zcross = 0.0;
-		threshold = 8000;
+		threshold = 500;
 		fs = 250;
 		pre = -1;
 		post = -1;
-		length = calcDataset.size();
 
 		// sætter længden på sættet indne vi beregner en puls
-		length = calcDataset.size();
+		length = calcDataset2.size();
 
 		// Regner pulsen for det filteret signal
 		for (int n = 1; n < length; n++) {
 
-			if (calcDataset.get(n - 1) <= threshold)
+			if (calcDataset2.get(n - 1) <= threshold)
 				pre = 1;
 			else
 				pre = -1;
-			if (calcDataset.get(n) <= threshold)
+			if (calcDataset2.get(n) <= threshold)
 				post = 1;
 			else
 				post = -1;
@@ -82,23 +81,24 @@ public class Calculator implements Runnable {
 	 */
 	public int calculatePulse() {
 		try {
-			ArrayList<Integer> inputDataset = dtb.getData(1250);
+			calcDataset = new ArrayList<>();
+			ArrayList<Double> inputDataset = dtb.getData(1250);
 
 			// Folder alt data fra sættet vi tog fra databasen med vores
 			// båndpass
 			// filter
-			for (int data : inputDataset) {
+			for (double data : inputDataset) {
 				calcDataset.add(Filter.doFilter(data));
 			}
 
 			zcross = 0.0;
-			threshold = 8000;
+			threshold = 500;
 			fs = 250;
 			pre = -1;
 			post = -1;
 			length = calcDataset.size();
 
-			// sætter længden på sættet indne vi beregner en puls
+			// sætter længden på sættet inden vi beregner en puls
 			length = calcDataset.size();
 
 			// Regner pulsen for det filteret signal
@@ -120,10 +120,6 @@ public class Calculator implements Runnable {
 			e.printStackTrace();
 			return -1;
 		}
-	}
-
-	public void setStage(Stage dialogStage) {
-
 	}
 
 	/**

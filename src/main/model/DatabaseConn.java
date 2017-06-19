@@ -67,19 +67,19 @@ public class DatabaseConn extends Thread implements Observed {
 		return instance;
 	}
 
-	// put the raw data from the sensor in the database
+	 
 	/**
-	 * 
+	 * put the raw data from the sensor in the database
 	 * @param data
 	 */
-	public synchronized void addData(ArrayList<Integer> data) {
+	public synchronized void addData(ArrayList<Double> data) {
 		// System.out.println("Tilføj data til database: " +
 		// this.getClass().getName());
 		try {
 			oldID = newID;
 
 			String sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES";
-			for (int input : data) {
+			for (double input : data) {
 				sql += "(" + input + ",1," + activeExamination + "),";
 			}
 			int length = sql.length();
@@ -130,19 +130,19 @@ public class DatabaseConn extends Thread implements Observed {
 	 * @param length
 	 * @return
 	 */
-	public synchronized ArrayList<Integer> getData(int length) throws SQLException {
+	public synchronized ArrayList<Double> getData(int length) throws SQLException {
 		// fetch "length" numbers of measurement from the
 		// database and put it in an ArrayList
 		// System.out.println("Henter ... ");
 
-		ArrayList<Integer> list = new ArrayList<Integer>();
+		ArrayList<Double> list = new ArrayList<>();
 		String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
 				+ " AND idMåling < " + newID + " ORDER BY idMåling ASC LIMIT " + length + ";";
 		stmt = conn.createStatement();
 		stmt.closeOnCompletion();
 		ResultSet rset = stmt.executeQuery(sql);
 		while (rset.next()) {
-			list.add(rset.getInt(1));
+			list.add(rset.getDouble(1));
 		}
 		rset.close();
 		return list;
@@ -204,7 +204,7 @@ public class DatabaseConn extends Thread implements Observed {
 	 * 
 	 */
 	@Override
-	public void notification(String string) {
+	public synchronized void notification(String string) {
 		ActionEvent event = new ActionEvent(this, 0, string);
 		for (Iterator<ActionListener> i = lyttere.iterator(); i.hasNext();) {
 			ActionListener l = (ActionListener) i.next();
@@ -216,7 +216,7 @@ public class DatabaseConn extends Thread implements Observed {
 	 * 
 	 */
 	@Override
-	public void run() {
+	public  void run() {
 		System.out.println("Start databasetråd: " + this.getClass().getName());
 		try {
 			newExamination();
@@ -232,7 +232,7 @@ public class DatabaseConn extends Thread implements Observed {
 
 				}
 				// System.out.println("Forsøger at hente fra buffer ... ");
-				ArrayList<Integer> toDatabase = q.getBuffer();
+				ArrayList<Double> toDatabase = q.getBuffer();
 				if (toDatabase.size() > 0 && toDatabase != null)
 					this.addData(toDatabase);
 				Thread.sleep(100);
@@ -292,18 +292,22 @@ public class DatabaseConn extends Thread implements Observed {
 	 * @return
 	 * @throws SQLException
 	 */
-	public synchronized ArrayList<Integer> getDataToGraph() throws SQLException {
+	public synchronized ArrayList<Double> getDataToGraph() throws SQLException {
+//		long t1 = System.currentTimeMillis();
+//		System.out.println("Henter til graf!");
 		// System.out.println("Henter til graf: " + this.getClass().getName());
-		ArrayList<Integer> list = new ArrayList<Integer>();
+		ArrayList<Double> list = new ArrayList<>();
 		String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
 				+ " AND idMåling > " + oldID + " AND idMåling <= " + newID + " ORDER BY idMåling ASC";
 		stmt = conn.createStatement();
 		ResultSet rset = stmt.executeQuery(sql);
 		stmt.closeOnCompletion();
 		while (rset.next()) {
-			list.add(rset.getInt(1));
+			list.add(rset.getDouble(1));
 		}
 		rset.close();
+//		long t2 = System.currentTimeMillis();
+//		System.out.println("Returnerer: "+(t2-t1));
 		return list;
 	}
 
@@ -430,16 +434,16 @@ public class DatabaseConn extends Thread implements Observed {
 	 *            tt:mm:ss
 	 * @return en liste med data fra databasen
 	 */
-	public synchronized ArrayList<Integer> getDataToHistory(String startTime) throws SQLException {
+	public synchronized ArrayList<Double> getDataToHistory(String startTime) throws SQLException {
 		LocalDate localDate = LocalDate.now();
 		String toSQL = localDate.toString() + " " + startTime;
-		ArrayList<Integer> output = new ArrayList<>();
-		String sql = "SELECT * FROM Måling WHERE TIMESTAMP >= '" + toSQL + "' AND Undersøgelse_idUndersøgelse = "
+		ArrayList<Double> output = new ArrayList<>();
+		String sql = "SELECT Værdi FROM Måling WHERE TIMESTAMP >= '" + toSQL + "' AND Undersøgelse_idUndersøgelse = "
 				+ activeExamination + " LIMIT 5000;";
 		stmt = conn.createStatement();
 		ResultSet rset = stmt.executeQuery(sql);
 		while (rset.next()) {
-			output.add(rset.getInt(2));
+			output.add(rset.getDouble(1));
 		}
 		return output;
 	}

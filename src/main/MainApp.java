@@ -7,6 +7,7 @@ import main.control.TestSensor;
 import main.model.DatabaseConn;
 
 import java.sql.SQLException;
+import java.util.ConcurrentModificationException;
 
 import javafx.application.Application;
 
@@ -18,7 +19,7 @@ import javafx.application.Application;
 public class MainApp {
 	private static boolean running = false;
 	private static Sensor s = null;
-	private static boolean testing = true;
+	private static boolean testing = false;
 	private static Thread sensorThread = null;
 	private static DatabaseConn dtb = DatabaseConn.getInstance();
 
@@ -26,30 +27,33 @@ public class MainApp {
 	 * 
 	 */
 	private static void run() {
-		while (running) {
-			boolean examRunning = dtb.isExamRunning();
-			boolean appRunning = dtb.isAppRunning();
-			if (!examRunning && sensorThread.isAlive()) {
-				try {
-					s.pauseThread();
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+		try {
+			while (running) {
+				boolean examRunning = dtb.isExamRunning();
+				boolean appRunning = dtb.isAppRunning();
+				if (!examRunning && sensorThread.isAlive()) {
+					try {
+						s.pauseThread();
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				} else if (examRunning && !sensorThread.isAlive()) {
+					Thread.sleep(1000);
+					sensorThread.start();
+				} else if (!examRunning && sensorThread.isAlive()) {
+					s.resumeThread();
 				}
-			} else if (examRunning && !sensorThread.isAlive()) {
-				sensorThread.start();
-			} else if (!examRunning && sensorThread.isAlive()) {
-				s.resumeThread();
-			}
-			if (!appRunning) {
-				s.stopConn();
-				dtb.stopConn();
-				System.exit(0);
-			}
-			try {
+				if (!appRunning) {
+					s.stopConn();
+					dtb.stopConn();
+					System.exit(0);
+				}
+
 				Thread.sleep(500);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+
 			}
+		} catch (InterruptedException e) {
+			e.printStackTrace();
 		}
 	}
 
@@ -85,7 +89,8 @@ public class MainApp {
 				Application.launch(GuiController.class);
 			}
 		};
-		guiThread.start();
+		try{
+		guiThread.start();}catch(ConcurrentModificationException e){System.out.println("hej fra main");}
 		init();
 		run();
 	}

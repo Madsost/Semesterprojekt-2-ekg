@@ -4,6 +4,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.ConcurrentModificationException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javafx.animation.AnimationTimer;
@@ -43,12 +44,17 @@ public class EKGViewController implements ActionListener {
 	private int xSeriesData = 0;
 	private ConcurrentLinkedQueue<Number> dataQ = new ConcurrentLinkedQueue<>();
 	private XYChart.Series<Number, Number> series = new XYChart.Series<>();
+	private ArrayList<Double> temp = null;
 
 	private boolean running = false;
 	private boolean appRunning = false;
 	private boolean graphShown = true;
 
 	private Thread calculatorThread = null;
+	// privSate Adder adder = null;
+	private Thread adderThread = null;
+
+	private long t2, t1;
 
 	@FXML
 	private Label pulseLabel;
@@ -72,6 +78,9 @@ public class EKGViewController implements ActionListener {
 		xAxis = new NumberAxis(0, MAX_DATA_POINTS, 50);
 		yAxis = new NumberAxis();
 		dtb.attachListener(this);
+
+		// adder = new Adder();
+
 	}
 
 	/**
@@ -93,6 +102,8 @@ public class EKGViewController implements ActionListener {
 		xAxis.setTickMarkVisible(true);
 		xAxis.setMinorTickCount(10);
 		xAxis.setMinorTickVisible(true);
+		xAxis.setLowerBound(0.0);
+		xAxis.setUpperBound(MAX_DATA_POINTS);
 
 		// -- oprettelse af grafen
 		lineChart = new LineChart<Number, Number>(xAxis, yAxis);
@@ -142,12 +153,35 @@ public class EKGViewController implements ActionListener {
 	/**
 	 * 
 	 */
+
+	/*
+	 * private class Adder implements Runnable { private boolean running =
+	 * false;
+	 * 
+	 * @Override public void run() { running = true; while (true) { try { while
+	 * (!running) { Thread.sleep(200); } ArrayList<Double> temp2 = temp; if
+	 * (temp2 != null) { for (double i : temp2) { dataQ.add(i); temp2.remove(i);
+	 * Thread.sleep(4); System.out.println("Vi forsøgte at tilføje noget"); } }
+	 * System.out.println("temp2 var null"); } catch (InterruptedException e) {
+	 * e.printStackTrace(); } }
+	 * 
+	 * }
+	 * 
+	 * public void resumeThread() { running = true; }
+	 * 
+	 * public void pauseThread() throws InterruptedException { running = false;
+	 * }
+	 * 
+	 * }
+	 */
+
 	private void addDataToSeries() {
-		// -- tilføj 4 datapunkter til serien (opdateres med 60 Hz, svarer til
-		// hastighed på 240 Hz)
-		for (int i = 0; i < 4; i++) {
+		int count = (dataQ.size() > 500) ? 3 : 2;
+		count = 2;
+		for (int i = 0; i < count; i++) {
+
 			if (dataQ.isEmpty()) {
-				break;
+				return;
 			}
 			series.getData().add(new XYChart.Data<>(xSeriesData++, dataQ.remove()));
 		}
@@ -160,6 +194,7 @@ public class EKGViewController implements ActionListener {
 		// -- opdater
 		xAxis.setLowerBound(xSeriesData - MAX_DATA_POINTS);
 		xAxis.setUpperBound(xSeriesData - 1);
+
 	}
 
 	/**
@@ -184,12 +219,15 @@ public class EKGViewController implements ActionListener {
 					dtb.setExaminationRunning(true);
 					dtb.resumeThread();
 
+					series.getData().clear();
+					xAxis.setLowerBound(0.0);
+					xAxis.setUpperBound(MAX_DATA_POINTS);
+
 					// fortsæt beregner-tråd
 					cal.resumeThread();
+					// adder.resumeThread();
 				}
 				if (!appRunning) {
-
-					prepareTimeline();
 
 					appRunning = true;
 
@@ -201,6 +239,13 @@ public class EKGViewController implements ActionListener {
 					calculatorThread = new Thread(cal);
 					calculatorThread.setDaemon(true);
 					calculatorThread.start();
+
+					/*
+					 * adderThread = new Thread(adder);
+					 * adderThread.setDaemon(true); adderThread.start();
+					 */
+
+					prepareTimeline();
 				}
 				startStopButton.setText("Afslut undersøgelse");
 			} else {
@@ -211,6 +256,7 @@ public class EKGViewController implements ActionListener {
 				dtb.stopExamination();
 				dtb.pauseThread();
 				cal.pauseThread();
+				// adder.pauseThread();
 			}
 		} catch (InterruptedException e) {
 			Alert alert = new Alert(AlertType.ERROR);
@@ -255,12 +301,12 @@ public class EKGViewController implements ActionListener {
 				handleNewPulse();
 				break;
 			case "EKG":
-				ArrayList<Integer> temp = dtb.getDataToGraph();
-				ArrayList<Double> temp2 = new ArrayList<>();
-				for (int i : temp) {
-					temp2.add(Filter.doSmooth(i));
+				temp = dtb.getDataToGraph();
+				for (double i : temp) {
+					i = Filter.doSmooth(i);
+					dataQ.add(i);
 				}
-				dataQ.addAll(temp2);
+
 				break;
 			default:
 				break;
@@ -273,6 +319,7 @@ public class EKGViewController implements ActionListener {
 
 			alert.showAndWait();
 		}
+
 	}
 
 	/**

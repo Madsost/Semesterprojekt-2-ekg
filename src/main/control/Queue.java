@@ -9,7 +9,7 @@ import java.util.ArrayList;
  */
 public class Queue {
 
-	private ArrayList<Integer> buffer = null;
+	private ArrayList<Double> buffer = null;
 	private boolean empty = true;
 	private static Queue instance;
 
@@ -26,7 +26,7 @@ public class Queue {
 	 * 
 	 * @param value
 	 */
-	public synchronized void addToBuffer(int[] value) {
+	public synchronized void addToBuffer(double[] value) {
 		if (!empty) {
 			try {
 				wait();
@@ -34,7 +34,7 @@ public class Queue {
 				e.printStackTrace();
 			}
 		}
-		for (int number : value) {
+		for (double number : value) {
 			buffer.add(number);
 		}
 		empty = false;
@@ -46,7 +46,7 @@ public class Queue {
 	 * 
 	 * @return
 	 */
-	public synchronized ArrayList<Integer> getBuffer() {
+	public synchronized ArrayList<Double> getBuffer() {
 		// if the buffer is empty, the thread is put to sleep
 		if (empty) {
 			try {
@@ -57,7 +57,7 @@ public class Queue {
 		}
 		// clear the buffer and returns
 		empty = true;
-		ArrayList<Integer> placeHolder = new ArrayList<>();
+		ArrayList<Double> placeHolder = new ArrayList<>();
 		placeHolder = buffer;
 		buffer = new ArrayList<>();
 		notify();

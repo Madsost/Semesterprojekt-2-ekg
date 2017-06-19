@@ -18,8 +18,9 @@ public class EKGSensor implements Sensor {
 	private SerialPort port;
 	private String input = "";
 	private int toOutputCount = 0;
-	private int[] outputBuffer = new int[250];
+	private double[] outputBuffer = new double[250];
 	private boolean running = false;
+	private String split = "!";
 
 	/**
 	 * 
@@ -42,38 +43,38 @@ public class EKGSensor implements Sensor {
 				// while there is someting in the string we read, we
 				// extract
 				// values from it
-				while (input.contains("-")) {
+				while (input.contains(split)) {
 					// if there are null og nothing instead of a
 					// value, remove
 					// it
-					if (input.substring(0, input.indexOf("-")).contains("null")
-							|| input.substring(0, input.indexOf("-")).equals("")) {
-						input = input.substring(input.indexOf("-") + 1);
+					if (input.substring(0, input.indexOf(split)).contains("null")
+							|| input.substring(0, input.indexOf(split)).equals("")) {
+						input = input.substring(input.indexOf(split) + 1);
 					}
 
 					// read the next value, parse it to an int and
 					// put it in the Queue
-					if (!(input.substring(0) == "-")) {
-						try {
-							outputBuffer[toOutputCount++] = Integer.parseInt(input.substring(0, input.indexOf("-")));
-							if (toOutputCount == 250) {
-								queue.addToBuffer(outputBuffer);
-								outputBuffer = new int[250];
-								toOutputCount = 0;
-							}
-							// removes the value we just saved to
-							// the queue so
-							// we dont read it again
-							input = input.substring(input.indexOf("-") + 1);
-						} catch (NumberFormatException ex) {
-							System.out.println("NFE ved parsing" + ex);
+					if (!(input.substring(0).equals(split))) {
+						// System.out.println(toOutputCount);
+						outputBuffer[toOutputCount++] = Double.parseDouble(input.substring(0, input.indexOf(split)));
+						if (toOutputCount == 250) {
+							queue.addToBuffer(outputBuffer);
+							outputBuffer = new double[250];
+							toOutputCount = 0;
 						}
+						// removes the value we just saved to
+						// the queue so
+						// we dont read it again
+						input = input.substring(input.indexOf(split) + 1);
+
 					}
 				}
 			}
 		} catch (SerialPortException e) {
 			System.out.println("Fik ikke læst fra porten ");
 			e.printStackTrace();
+		} catch (NumberFormatException ex) {
+			return;
 		}
 	}
 
@@ -106,7 +107,24 @@ public class EKGSensor implements Sensor {
 				}
 			}
 		}
+	}
 
+	private void clearLine() {
+		try {
+			for (int i = 0; i < 100; i++) {
+				// hvis der er målinger på vej
+				String buffer = "";
+				if (port.getInputBufferBytesCount() > 0) {
+					buffer += port.readString();
+					int pos = -1;
+					if ((pos = buffer.lastIndexOf("!")) > -1) {
+						buffer = buffer.substring(pos + 1);
+					}
+				}
+			}
+		} catch (SerialPortException e2) {
+			e2.printStackTrace();
+		}
 	}
 
 	/**
@@ -134,6 +152,8 @@ public class EKGSensor implements Sensor {
 			port.setParams(baudRate, 8, 1, 0);
 			port.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
 			port.setDTR(true);
+
+			clearLine();
 
 		} catch (SerialPortException ex) {
 			System.out.println("Serial Port Exception: " + ex);

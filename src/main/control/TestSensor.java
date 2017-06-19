@@ -5,18 +5,19 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Scanner;
+
 /**
  * 
  * @author Mads Østergaard
  *
  */
 public class TestSensor extends Thread implements Sensor {
-	private ArrayList<Integer> dataset = new ArrayList<>();
+	private ArrayList<Double> dataset = new ArrayList<>();
 	private final String variant = "100";
 	private int count = 0;
 	private boolean running = false;
 	private int toOutputCount = 0;
-	private int[] outputBuffer = new int[250];
+	private double[] outputBuffer = new double[250];
 
 	// sætter instansen op af Queue så det er den samme som databaseConn tilgår
 	private Queue q = Queue.getInstance();
@@ -37,13 +38,10 @@ public class TestSensor extends Thread implements Sensor {
 			}
 
 			for (double floating : temp) {
-				int integer = (int) Math.round(floating * 10000);
+				// int integer = (int) Math.round(floating * 10000);
 				// System.out.println(floating);
-				dataset.add(integer);
+				dataset.add(floating);
 			}
-			// for(int tal : dataset){
-			// System.out.println(tal);
-			// }
 			sc.close();
 
 		} catch (IOException e) {
@@ -63,7 +61,6 @@ public class TestSensor extends Thread implements Sensor {
 				try {
 					Thread.sleep(200);
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
@@ -72,7 +69,7 @@ public class TestSensor extends Thread implements Sensor {
 			outputBuffer[toOutputCount++] = dataset.get(count);
 			if (toOutputCount == 250) {
 				q.addToBuffer(outputBuffer);
-				outputBuffer = new int[250];
+				outputBuffer = new double[250];
 				toOutputCount = 0;
 			}
 			count++;
