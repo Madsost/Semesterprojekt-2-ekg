@@ -4,7 +4,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.ConcurrentModificationException;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javafx.animation.AnimationTimer;
@@ -150,7 +149,6 @@ public class EKGViewController implements ActionListener {
 		}.start();
 	}
 
-	
 	/**
 	 * 
 	 */
