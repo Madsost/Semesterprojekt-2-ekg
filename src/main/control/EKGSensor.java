@@ -34,62 +34,34 @@ public class EKGSensor implements Sensor {
 	 * @param event
 	 */
 	public void measure(SerialPortEvent event) {
-		try {
-			if (event.getEventValue() > 0) {
-				// -------- NY KODE ------- // 
-				// Kode jeg skrev til kursusopgaven, den burde gøre det rigtigt... 
-				input += port.readString(event.getEventValue());
-				int pos = -1;
-				while ((pos = input.indexOf(split)) > -1) {
-					outputBuffer[toOutputCount++] = Double.parseDouble(input.substring(0, pos));
-					if (toOutputCount == 250) {
-						queue.addToBuffer(outputBuffer);
-						outputBuffer = new double[250];
-						toOutputCount = 0;
-					}
-					input = input.substring(pos + 1);
-				}
-				// ------ SLUT NY KODE ----// 
-				/*
-				// put what is on the buffer in a String
-				input += port.readString(event.getEventValue());
 
-				// while there is someting in the string we read, we
-				// extract
-				// values from it
-				while (input.contains(split)) {
-					// if there are null og nothing instead of a
-					// value, remove
-					// it
-					if (input.substring(0, input.indexOf(split)).contains("null")
-							|| input.substring(0, input.indexOf(split)).equals("")) {
-						input = input.substring(input.indexOf(split) + 1);
-					}
+		// -------- NY KODE ------- //
+		// Kode jeg skrev til kursusopgaven, den burde gøre det
+		// rigtigt...
 
-					// read the next value, parse it to an int and
-					// put it in the Queue
-					if (!(input.substring(0).equals(split))) {
-						// System.out.println(toOutputCount);
-						outputBuffer[toOutputCount++] = Double.parseDouble(input.substring(0, input.indexOf(split)));
-						if (toOutputCount == 250) {
-							queue.addToBuffer(outputBuffer);
-							outputBuffer = new double[250];
-							toOutputCount = 0;
-						}
-						// removes the value we just saved to
-						// the queue so
-						// we dont read it again
-						input = input.substring(input.indexOf(split) + 1);
-
-					}
-				}*/
-			}
-		} catch (SerialPortException e) {
-			System.out.println("Fik ikke læst fra porten ");
-			e.printStackTrace();
-		} catch (NumberFormatException ex) {
-			return;
-		}
+		// ------ SLUT NY KODE ----//
+		/*
+		 * // put what is on the buffer in a String input +=
+		 * port.readString(event.getEventValue());
+		 * 
+		 * // while there is someting in the string we read, we // extract //
+		 * values from it while (input.contains(split)) { // if there are null
+		 * og nothing instead of a // value, remove // it if (input.substring(0,
+		 * input.indexOf(split)).contains("null") || input.substring(0,
+		 * input.indexOf(split)).equals("")) { input =
+		 * input.substring(input.indexOf(split) + 1); }
+		 * 
+		 * // read the next value, parse it to an int and // put it in the Queue
+		 * if (!(input.substring(0).equals(split))) { //
+		 * System.out.println(toOutputCount); outputBuffer[toOutputCount++] =
+		 * Double.parseDouble(input.substring(0, input.indexOf(split))); if
+		 * (toOutputCount == 250) { queue.addToBuffer(outputBuffer);
+		 * outputBuffer = new double[250]; toOutputCount = 0; } // removes the
+		 * value we just saved to // the queue so // we dont read it again input
+		 * = input.substring(input.indexOf(split) + 1);
+		 * 
+		 * } }
+		 */
 	}
 
 	/**
@@ -97,28 +69,54 @@ public class EKGSensor implements Sensor {
 	 */
 	public void run() {
 
-		try {
-			// we listen on the Serial port
-			port.addEventListener(new SerialPortEventListener() {
-
-				@Override
-				public void serialEvent(SerialPortEvent event) {
-					measure(event);
-				}
-
-			});
-		} catch (SerialPortException e) {
-			e.printStackTrace();
-		}
+		/*
+		 * try { // we listen on the Serial port port.addEventListener(new
+		 * SerialPortEventListener() {
+		 * 
+		 * @Override public void serialEvent(SerialPortEvent event) { if
+		 * (event.isRXCHAR() && event.getEventValue() > 0) { try { input +=
+		 * port.readString(); } catch (SerialPortException e) {
+		 * e.printStackTrace(); } int pos = -1; while ((pos =
+		 * input.indexOf("!")) > -1) { try { outputBuffer[toOutputCount++] =
+		 * Double.parseDouble(input.substring(0, pos)); } catch
+		 * (NumberFormatException e) { System.out.println("Number format "+
+		 * e.getMessage()); continue; } if (toOutputCount == 250) {
+		 * queue.addToBuffer(outputBuffer); outputBuffer = new double[250];
+		 * toOutputCount = 0; } // System.out.println(input); input =
+		 * input.substring(pos + 1); // System.out.println(input);
+		 * 
+		 * } }
+		 * 
+		 * } }); } catch (SerialPortException e) { e.printStackTrace(); }
+		 */
 
 		// starter en løkke som vi kan styre...
+		running = true;
 		while (true) {
-			while (!running) {
-				try {
-					Thread.sleep(200);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+			try {
+				while (!running) {
+					Thread.sleep(100);
 				}
+				input += port.readString();
+				int pos = -1;
+				while ((pos = input.indexOf("!")) > -1) {
+					outputBuffer[toOutputCount++] = Double.parseDouble(input.substring(0, pos));
+					if (toOutputCount == 250) {
+						queue.addToBuffer(outputBuffer);
+						outputBuffer = new double[250];
+						toOutputCount = 0;
+					}
+
+					input = input.substring(pos + 1);
+				}
+				Thread.sleep(100);
+
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} catch (SerialPortException e) {
+				e.printStackTrace();
+			} catch (NumberFormatException e) {
+				e.printStackTrace();
 			}
 		}
 	}
@@ -163,11 +161,11 @@ public class EKGSensor implements Sensor {
 			// - 8 er antallet af dataBits
 			// - 1 er stop bits
 			// - 0 er paritetstypen
-			port.setParams(baudRate, 8, 1, 0);
+			port.setParams(SerialPort.BAUDRATE_19200, 8, 1, 0);
 			port.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
 			port.setDTR(true);
 
-			clearLine();
+			 clearLine();
 
 		} catch (SerialPortException ex) {
 			System.out.println("Serial Port Exception: " + ex);

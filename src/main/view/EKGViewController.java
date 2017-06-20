@@ -52,9 +52,9 @@ public class EKGViewController implements ActionListener {
 
 	private Thread calculatorThread = null;
 	// privSate Adder adder = null;
-	private Thread adderThread = null;
+	// private Thread adderThread = null;
 
-	private long t2, t1;
+	// private long t2, t1;
 
 	@FXML
 	private Label pulseLabel;
@@ -150,31 +150,10 @@ public class EKGViewController implements ActionListener {
 		}.start();
 	}
 
+	
 	/**
 	 * 
 	 */
-
-	/*
-	 * private class Adder implements Runnable { private boolean running =
-	 * false;
-	 * 
-	 * @Override public void run() { running = true; while (true) { try { while
-	 * (!running) { Thread.sleep(200); } ArrayList<Double> temp2 = temp; if
-	 * (temp2 != null) { for (double i : temp2) { dataQ.add(i); temp2.remove(i);
-	 * Thread.sleep(4); System.out.println("Vi forsøgte at tilføje noget"); } }
-	 * System.out.println("temp2 var null"); } catch (InterruptedException e) {
-	 * e.printStackTrace(); } }
-	 * 
-	 * }
-	 * 
-	 * public void resumeThread() { running = true; }
-	 * 
-	 * public void pauseThread() throws InterruptedException { running = false;
-	 * }
-	 * 
-	 * }
-	 */
-
 	private void addDataToSeries() {
 		int count = (dataQ.size() > 500) ? 3 : 2;
 		count = 4;

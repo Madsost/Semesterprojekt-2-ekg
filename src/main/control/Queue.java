@@ -2,6 +2,8 @@ package main.control;
 
 import java.util.ArrayList;
 
+import main.util.Filter;
+
 /**
  * 
  * @author Mads Østergaard
@@ -35,7 +37,7 @@ public class Queue {
 			}
 		}
 		for (double number : value) {
-			buffer.add(number);
+			buffer.add(Filter.doNotch(number));
 		}
 		empty = false;
 		notify();

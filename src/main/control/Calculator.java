@@ -49,28 +49,38 @@ public class Calculator implements Runnable {
 			calcDataset2.add(Filter.doFilter(data));
 		}
 
-		zcross = 0.0;
-		pre = -1;
-		post = -1;
+		double max = 0;
+		for (double data : calcDataset2) {
+			max = (data > max) ? data : max;
+		}
+
+		double threshold2 = 0.8 * max;
+
+		double zcross2 = 0.0;
+		int pre2 = -1;
+		int post2 = -1;
+
+		int result2 = 0;
 
 		// sætter længden på sættet indne vi beregner en puls
-		length = calcDataset2.size();
+		int length2 = calcDataset2.size();
 
 		// Regner pulsen for det filteret signal
-		for (int n = 1; n < length; n++) {
-
-			if (calcDataset2.get(n - 1) <= threshold)
-				pre = 1;
+		for (int n = 1; n < length2; n++) {
+			pre2 = -1;
+			post2 = -1;
+			if (calcDataset2.get(n - 1) > threshold2)
+				pre2 = 1;
 			else
-				pre = -1;
-			if (calcDataset2.get(n) <= threshold)
-				post = 1;
+				pre2 = -1;
+			if (calcDataset2.get(n) > threshold2)
+				post2 = 1;
 			else
-				post = -1;
-			zcross = zcross + (Math.abs(pre - post) / 2);
-			result = (int) Math.round(60 * zcross / ((2 * length) / fs));
+				post2 = -1;
+			zcross2 = zcross2 + (Math.abs(pre2 - post2) / 2);
 		}
-		return result;
+		result2 = (int) (60 * zcross2 / (2 * length2 / fs));
+		return result2;
 	}
 
 	/**
@@ -99,17 +109,15 @@ public class Calculator implements Runnable {
 			}
 
 			threshold = 0.8 * max;
-			System.out.println(threshold);
+			// System.out.println(threshold);
 
 			// sætter længden på sættet inden vi beregner en puls
 			length = calcDataset.size();
-			System.out.println(length);
+			// System.out.println(length);
 
 			zcross = 0.0;
 
-			for (int n = 1; n < length; n++)
-
-			{
+			for (int n = 1; n < length; n++) {
 				pre = -1;
 				post = -1;
 				if (calcDataset.get(n - 1) > threshold)
@@ -117,10 +125,9 @@ public class Calculator implements Runnable {
 				if (calcDataset.get(n) > threshold)
 					post = 1;
 				zcross += (Math.abs(pre - post) / 2);
-				System.out.println("\tZCROSS: " + zcross);
 			}
-			result = (int) (60 * zcross / (4 * length / 250));
-			System.out.println(result);
+			result = (int) (60 * zcross / (2 * length / fs));
+			// System.out.println(result);
 			return result;
 		} catch (SQLException e) {
 			e.printStackTrace();
