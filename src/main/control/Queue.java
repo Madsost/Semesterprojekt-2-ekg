@@ -5,8 +5,9 @@ import java.util.ArrayList;
 import main.util.Filter;
 
 /**
+ * Queue-klasse, grænseflade mellem sensor og database.
  * 
- * @author Mads Østergaard
+ * @author Mads Østergaard, Emma Lundgaard og Morten Vorborg.
  *
  */
 public class Queue {
@@ -16,26 +17,29 @@ public class Queue {
 	private static Queue instance;
 
 	/**
-	 * 
+	 * Privat konstruktør. Kaldes, første gang der kaldes
+	 * <code>Queue.getInstance()</code>.
 	 */
 	private Queue() {
 		buffer = new ArrayList<>();
 	}
 
 	/**
-	 * insert value from sensor to the end of the buffer, 
-	 * called from sensor to put values in the Queue
+	 * insert value from sensor to the end of the buffer, called from sensor to
+	 * put values in the Queue
+	 * 
 	 * @param value
+	 *            array med input-værdier.
 	 */
 	public synchronized void addToBuffer(double[] value) {
-		if (!empty) {								/*1A*/
-			try {							
+		if (!empty) { /* 1A */
+			try {
 				wait();
-			} catch (InterruptedException e) {		/*1B*/
+			} catch (InterruptedException e) { /* 1B */
 				e.printStackTrace();
 			}
 		}
-		for (double number : value) {				/*1C*/
+		for (double number : value) { /* 1C */
 			buffer.add(Filter.doNotch(number));
 		}
 		empty = false;
@@ -44,14 +48,16 @@ public class Queue {
 
 	/**
 	 * returns and clears the buffer
-	 * @return
+	 * 
+	 * @return de 250 målinger der ligger i bufferen som en ArrayList af
+	 *         doubles.
 	 */
 	public synchronized ArrayList<Double> getBuffer() {
 		// if the buffer is empty, the thread is put to sleep
-		if (empty) {								/*2A*/
+		if (empty) { /* 2A */
 			try {
 				wait();
-			} catch (InterruptedException e) {		/*2B*/
+			} catch (InterruptedException e) { /* 2B */
 				e.printStackTrace();
 			}
 		}
@@ -65,8 +71,9 @@ public class Queue {
 	}
 
 	/**
+	 * Laver en instans af køen hvis den ikke er instantiereret.
 	 * 
-	 * @return
+	 * @return instansen af Queue - altid den samme.
 	 */
 	public static Queue getInstance() {
 		if (instance == null)

@@ -19,8 +19,8 @@ import main.view.EKGViewController;
 import main.view.RootLayoutController;
 
 /**
- * 
- * @author Mads Østergaard
+ * JavaFX applikation, startes som en separat proces.
+ * @author Mads Østergaard, Emma Lundgaard og Morten Vorborg.
  *
  */
 public class GuiController extends Application {
@@ -154,7 +154,6 @@ public class GuiController extends Application {
 			// Giv controlleren kontrol over vinduet.
 			EKGHistoryViewController controller = loader.getController();
 			controller.setDialogStage(dialogStage);
-			controller.setGuiController(this);
 
 			dialogStage.show();
 		} catch (Exception e) {

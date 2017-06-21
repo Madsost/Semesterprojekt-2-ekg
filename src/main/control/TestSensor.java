@@ -7,23 +7,24 @@ import java.util.ArrayList;
 import java.util.Scanner;
 
 /**
- * 
- * @author Mads Østergaard
+ * Klasse til afprøvning af systemet
+ * @author Mads Østergaard, Emma Lundgaard og Morten Vorborg.
  *
  */
-public class TestSensor extends Thread implements Sensor {
+public class TestSensor implements Sensor {
 	private ArrayList<Double> dataset = new ArrayList<>();
 	private final String variant = "100";
 	private int count = 0;
 	private boolean running = false;
 	private int toOutputCount = 0;
 	private double[] outputBuffer = new double[250];
-
-	// sætter instansen op af Queue så det er den samme som databaseConn tilgår
+	/**
+	 *  sætter instansen op af Queue så det er den samme som databaseConn tilgår
+	 */
 	private Queue q = Queue.getInstance();
 
 	/**
-	 * 
+	 * Opsætter testsensoren
 	 */
 	@Override
 	public void init() {
@@ -36,10 +37,7 @@ public class TestSensor extends Thread implements Sensor {
 			while (sc.hasNext()) {
 				temp.add(Double.parseDouble(sc.nextLine()));
 			}
-
 			for (double floating : temp) {
-				// int integer = (int) Math.round(floating * 10000);
-				// System.out.println(floating);
 				dataset.add(floating);
 			}
 			sc.close();
@@ -50,7 +48,7 @@ public class TestSensor extends Thread implements Sensor {
 	}
 
 	/**
-	 * 
+	 * Starter sensor-tråden - kaldes af <code>Thread.start()</code> i MainApp
 	 */
 	public void run() {
 		running = true;
@@ -82,7 +80,7 @@ public class TestSensor extends Thread implements Sensor {
 	}
 
 	/**
-	 * 
+	 * Pauser tråden ved at sætte running til falsk
 	 */
 	@Override
 	public void pauseThread() throws InterruptedException {
@@ -91,7 +89,7 @@ public class TestSensor extends Thread implements Sensor {
 	}
 
 	/**
-	 * 
+	 * Fortsætter tråden ved at sætte running til sand.
 	 */
 	@Override
 	public void resumeThread() {
@@ -99,7 +97,7 @@ public class TestSensor extends Thread implements Sensor {
 	}
 
 	/**
-	 * 
+	 * Stopper forbindelsen.
 	 */
 	@Override
 	public void stopConn() {

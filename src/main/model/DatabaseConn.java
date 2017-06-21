@@ -7,15 +7,14 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-
 import com.sun.javafx.scene.layout.region.Margins;
-
 import main.control.Observed;
 import main.control.Queue;
 
 /**
+ * Database-klasse. Håndterer kommunikation med MySQL-databasen.
  * 
- * @author Mads Østergaard
+ * @author Mads Østergaard, Emma Lundgaard og Morten Vorborg.
  *
  */
 public class DatabaseConn extends Thread implements Observed {
@@ -40,7 +39,7 @@ public class DatabaseConn extends Thread implements Observed {
 	private int newID = 0;
 
 	/**
-	 * EKG = 1, PULS = 2.
+	 * Privat konstruktør. Kaldes af <code>DatabaseConn.getInstance()</code>
 	 */
 	private DatabaseConn() {
 		try {
@@ -49,8 +48,6 @@ public class DatabaseConn extends Thread implements Observed {
 			conn.setAutoCommit(false);
 			System.out.println("Forbindelse oprettet til databasen!");
 
-			// newExamination();
-
 		} catch (Exception e) {
 			System.err.println(e.getClass().getName() + ": " + e.getMessage());
 			System.exit(0);
@@ -58,6 +55,7 @@ public class DatabaseConn extends Thread implements Observed {
 	}
 
 	/**
+	 * Opretter en instans af klassen hvis den ikke er oprettet.
 	 * 
 	 * @return instansen af databaseforbindelsen
 	 */
@@ -71,10 +69,9 @@ public class DatabaseConn extends Thread implements Observed {
 	 * put the raw data from the sensor in the database
 	 * 
 	 * @param data
+	 *            arrayListe med input data til databasen.
 	 */
 	public synchronized void addData(ArrayList<Double> data) {
-		// System.out.println("Tilføj data til database: " +
-		// this.getClass().getName());
 		try {
 			oldID = newID;
 
@@ -84,9 +81,7 @@ public class DatabaseConn extends Thread implements Observed {
 			}
 			int length = sql.length();
 			sql = sql.substring(0, length - 1);
-			// System.out.println(sql);
 			sql += ";";
-			// System.out.println(sql);
 			pstmt = conn.prepareStatement(sql);
 			pstmt.execute();
 			conn.commit();
@@ -110,9 +105,9 @@ public class DatabaseConn extends Thread implements Observed {
 	 * Gemmer en puls i databasen. </br>
 	 * 
 	 * @param pulse
+	 *            den puls der skal gemmes i databasen.
 	 */
 	public synchronized void addPulse(int pulse) throws SQLException {
-		// System.out.println("Gemmer puls ... ");
 		String sql = "INSERT INTO måling (værdi, type, Undersøgelse_idUndersøgelse) VALUES(?,?,?);";
 		pstmt = conn.prepareStatement(sql);
 		pstmt.setInt(1, pulse);
@@ -122,13 +117,14 @@ public class DatabaseConn extends Thread implements Observed {
 		conn.commit();
 
 		notification("Pulse");
-
 	}
 
 	/**
+	 * Kaldes af Calculator til pulsberegning.
 	 * 
 	 * @param length
-	 * @return
+	 *            antal målinger der skal hentes
+	 * @return målingerne fra databasen som arrayList
 	 */
 	public synchronized ArrayList<Double> getData(int length) throws SQLException {
 
@@ -136,17 +132,16 @@ public class DatabaseConn extends Thread implements Observed {
 		String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
 				+ " AND idMåling < " + newID + " ORDER BY idMåling desc LIMIT " + length + ";";
 		stmt = conn.createStatement();
-		// stmt.closeOnCompletion();
 		ResultSet rset = stmt.executeQuery(sql);
 		while (rset.next()) {
 			list.add(rset.getDouble(1));
 		}
-		// rset.close();
 		return list;
 	}
 
 	/**
-	 * 
+	 * Kaldes når undersøgelsen er slut. Sætter sluttidspunktet til det
+	 * nuværende tidspunkt.
 	 */
 	public synchronized void stopExamination() throws SQLException {
 		String sql = "UPDATE Undersøgelse SET slut = now() WHERE idUndersøgelse =" + activeExamination + ";";
@@ -156,8 +151,9 @@ public class DatabaseConn extends Thread implements Observed {
 	}
 
 	/**
+	 * Kaldes når grænsefladen skal opdaterer pulsen.
 	 * 
-	 * @return
+	 * @return den seneste puls
 	 */
 	public synchronized int getPulse() throws SQLException {
 		int pulse = 0;
@@ -176,12 +172,14 @@ public class DatabaseConn extends Thread implements Observed {
 		if (rset.next())
 			pulse = rset.getInt(1);
 		rset.close();
-		// stmt.close();
 		return pulse;
 	}
 
 	/**
+	 * Tilføj lytter på klassen
 	 * 
+	 * @param l
+	 *            lytterobjekt, der implementerer ActionListener
 	 */
 	@Override
 	public void attachListener(ActionListener l) {
@@ -190,7 +188,10 @@ public class DatabaseConn extends Thread implements Observed {
 	}
 
 	/**
+	 * Fjern lytter på klassen
 	 * 
+	 * @param l
+	 *            lytterobjekt, der implementerer ActionListener
 	 */
 	@Override
 	public void detachListener(ActionListener l) {
@@ -198,7 +199,10 @@ public class DatabaseConn extends Thread implements Observed {
 	}
 
 	/**
+	 * Giver alle lyttere en notifikation (ActionEvent)
 	 * 
+	 * @param string
+	 *            eventbeskeden til lytterne
 	 */
 	@Override
 	public synchronized void notification(String string) {
@@ -210,7 +214,7 @@ public class DatabaseConn extends Thread implements Observed {
 	}
 
 	/**
-	 * 
+	 * Kaldes af <code>start()</code> når tråden sættes i gang.
 	 */
 	@Override
 	public void run() {
@@ -224,11 +228,8 @@ public class DatabaseConn extends Thread implements Observed {
 		try {
 			while (true) {
 				while (!running) {
-
 					Thread.sleep(200);
-
 				}
-				// System.out.println("Forsøger at hente fra buffer ... ");
 				ArrayList<Double> toDatabase = q.getBuffer();
 				if (toDatabase.size() > 0 && toDatabase != null)
 					this.addData(toDatabase);
@@ -240,29 +241,23 @@ public class DatabaseConn extends Thread implements Observed {
 	}
 
 	/**
+	 * Pauser tråden
 	 * 
 	 * @throws InterruptedException
 	 */
-	public synchronized void pauseThread() throws InterruptedException {
+	public void pauseThread() throws InterruptedException {
 		running = false;
 	}
 
 	/**
-	 * 
+	 * Fortsætter tråden
 	 */
-	public synchronized void resumeThread() {
+	public void resumeThread() {
 		running = true;
 	}
 
 	/**
-	 * 
-	 * @param value
-	 */
-	public synchronized void setRunning(boolean value) {
-		this.running = value;
-	}
-
-	/**
+	 * Opretter en ny undersøgelse. Kaldes i <code>run()</code>
 	 * 
 	 * @throws SQLException
 	 */
@@ -285,14 +280,13 @@ public class DatabaseConn extends Thread implements Observed {
 	}
 
 	/**
+	 * Kaldes i EKGViewController til opdatering af graf når den modtager
+	 * notifikation om nye målinger.
 	 * 
-	 * @return
+	 * @return en liste med de seneste målinger
 	 * @throws SQLException
 	 */
 	public synchronized ArrayList<Double> getDataToGraph() throws SQLException {
-		// long t1 = System.currentTimeMillis();
-		// System.out.println("Henter til graf!");
-		// System.out.println("Henter til graf: " + this.getClass().getName());
 		ArrayList<Double> list = new ArrayList<>();
 		String sql = "SELECT værdi FROM måling WHERE type=1 AND Undersøgelse_idUndersøgelse = " + activeExamination
 				+ " AND idMåling > " + oldID + " AND idMåling <= " + newID + " ORDER BY idMåling ASC";
@@ -303,8 +297,6 @@ public class DatabaseConn extends Thread implements Observed {
 			list.add(rset.getDouble(1));
 		}
 		rset.close();
-		// long t2 = System.currentTimeMillis();
-		// System.out.println("Returnerer: "+(t2-t1));
 		return list;
 	}
 
@@ -415,7 +407,6 @@ public class DatabaseConn extends Thread implements Observed {
 		if (rset.next()) {
 			time = rset.getString(1);
 		}
-		// System.out.println(time);
 		return time;
 
 	}
@@ -446,13 +437,15 @@ public class DatabaseConn extends Thread implements Observed {
 	}
 
 	/**
-	 * 
+	 * Afslutter forbindelsen til databasen.
 	 */
 	public synchronized void stopConn() {
 		try {
+			if (stmt != null)
+				stmt.close();
+			if (pstmt != null)
+				pstmt.close();
 			conn.close();
-			stmt.close();
-			pstmt.close();
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}

@@ -12,9 +12,11 @@ import java.util.ConcurrentModificationException;
 import javafx.application.Application;
 
 /**
+ * <h1>Hovedprogram</h1> Starter programmet, kalder
+ * <code>Application.launch</code>, der starter javaFX applicationen,
+ * <code>init()</code> og <code>run()</code>.
  * 
- * @author Mads Østergaard
- *
+ * @author Mads Østergaard, Emma Lundgaard og Morten Vorborg.
  */
 public class MainApp {
 	private static boolean running = false;
@@ -24,7 +26,8 @@ public class MainApp {
 	private static DatabaseConn dtb = DatabaseConn.getInstance();
 
 	/**
-	 * 
+	 * Undersøger løbende om programmet skal fortsætte og om der er en
+	 * undersøgelse igang --> styrer sensor forbindelsen herefter.
 	 */
 	private static void run() {
 		try {
@@ -40,13 +43,11 @@ public class MainApp {
 				} else if (examRunning && !sensorThread.isAlive()) {
 					Thread.sleep(1000);
 					sensorThread.start();
-				} else if (!examRunning && sensorThread.isAlive()) {
+				} else if (examRunning && sensorThread.isAlive()) {
 					s.resumeThread();
 				}
 				if (!appRunning) {
-					s.stopConn();
-					dtb.stopConn();
-					System.exit(0);
+					stopApp();
 				}
 
 				Thread.sleep(500);
@@ -58,7 +59,24 @@ public class MainApp {
 	}
 
 	/**
-	 * 
+	 * Sikrer god afslutning på program.
+	 */
+	public static void stopApp() {
+		if (s != null) {
+			s.stopConn();
+		}
+		try {
+			dtb.setAppRunning(false);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		dtb.stopConn();
+		System.exit(0);
+	}
+
+	/**
+	 * Opsætter sensoren og tildeler den en tråd. Sætter
+	 * <code>setAppRunning</code> i databasen til sand.
 	 */
 	private static void init() {
 		try {
@@ -79,6 +97,7 @@ public class MainApp {
 	}
 
 	/**
+	 * Indgang for programmet.
 	 * 
 	 * @param args
 	 */
@@ -89,8 +108,7 @@ public class MainApp {
 				Application.launch(GuiController.class);
 			}
 		};
-		try{
-		guiThread.start();}catch(ConcurrentModificationException e){System.out.println("hej fra main");}
+		guiThread.start();
 		init();
 		run();
 	}

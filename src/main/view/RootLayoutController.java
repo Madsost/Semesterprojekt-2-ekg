@@ -7,7 +7,7 @@ import main.control.GuiController;
 
 /**
  * 
- * @author Mads Østergaard
+ * @author Mads Østergaard, Emma Lundgaard og Morten Vorborg.
  *
  */
 public class RootLayoutController {

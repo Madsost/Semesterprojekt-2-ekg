@@ -26,8 +26,9 @@ import main.model.DatabaseConn;
 import main.util.Filter;
 
 /**
+ * View-controller til visning af EKG-et
  * 
- * @author Mads Østergaard
+ * @author Mads Østergaard, Emma Lundgaard og Morten Vorborg.
  *
  */
 public class EKGViewController implements ActionListener {
@@ -50,10 +51,6 @@ public class EKGViewController implements ActionListener {
 	private boolean graphShown = true;
 
 	private Thread calculatorThread = null;
-	// privSate Adder adder = null;
-	// private Thread adderThread = null;
-
-	// private long t2, t1;
 
 	@FXML
 	private Label pulseLabel;
@@ -69,7 +66,7 @@ public class EKGViewController implements ActionListener {
 	private Button showHistory;
 
 	/**
-	 * 
+	 * Konstruktør - kaldes automatisk af loaderen
 	 */
 	public EKGViewController() {
 		dtb = DatabaseConn.getInstance();
@@ -77,13 +74,10 @@ public class EKGViewController implements ActionListener {
 		xAxis = new NumberAxis(0, MAX_DATA_POINTS, 50);
 		yAxis = new NumberAxis();
 		dtb.attachListener(this);
-
-		// adder = new Adder();
-
 	}
 
 	/**
-	 * 
+	 * Kaldes automatisk af loaderen
 	 */
 	@FXML
 	public void initialize() {
@@ -151,13 +145,13 @@ public class EKGViewController implements ActionListener {
 	}
 
 	/**
-	 * 
+	 * Fjerner 4 målinger fra køen og tilføjer dem til dataserien.
 	 */
 	private void addDataToSeries() {
 		for (int i = 0; i < 4; i++) {
 
 			if (dataQ.isEmpty()) {
-				return;
+				break;
 			}
 			series.getData().add(new XYChart.Data<>(xSeriesData++, dataQ.remove()));
 		}
@@ -174,15 +168,17 @@ public class EKGViewController implements ActionListener {
 	}
 
 	/**
+	 * Kaldes af GuiControlleren efter klassen bliver instantieret
 	 * 
 	 * @param main
+	 *            GuiController
 	 */
 	public void setGuiController(GuiController main) {
 		this.main = main;
 	}
 
 	/**
-	 * 
+	 * Håndterer start og stop knappen
 	 */
 	@FXML
 	private void handleStartStop() {
@@ -201,7 +197,6 @@ public class EKGViewController implements ActionListener {
 
 					// fortsæt beregner-tråd
 					cal.resumeThread();
-					// adder.resumeThread();
 				}
 				if (!appRunning) {
 
@@ -216,11 +211,6 @@ public class EKGViewController implements ActionListener {
 					calculatorThread.setDaemon(true);
 					calculatorThread.start();
 
-					/*
-					 * adderThread = new Thread(adder);
-					 * adderThread.setDaemon(true); adderThread.start();
-					 */
-
 					prepareTimeline();
 				}
 				startStopButton.setText("Afslut undersøgelse");
@@ -232,7 +222,6 @@ public class EKGViewController implements ActionListener {
 				dtb.stopExamination();
 				dtb.pauseThread();
 				cal.pauseThread();
-				// adder.pauseThread();
 			}
 		} catch (InterruptedException e) {
 			Alert alert = new Alert(AlertType.ERROR);
@@ -252,7 +241,7 @@ public class EKGViewController implements ActionListener {
 	}
 
 	/**
-	 * 
+	 * Styrer synligheden af grafen
 	 */
 	@FXML
 	private void handleCheckBox() {
@@ -266,7 +255,7 @@ public class EKGViewController implements ActionListener {
 	}
 
 	/**
-	 * 
+	 * Reagerer på et actionEvent
 	 */
 	@Override
 	public void actionPerformed(ActionEvent event) {
@@ -274,7 +263,7 @@ public class EKGViewController implements ActionListener {
 			String eventCommand = event.getActionCommand();
 			switch (eventCommand) {
 			case "Pulse":
-				handleNewPulse();
+				updatePulse(dtb.getPulse());
 				break;
 			case "EKG":
 				temp = dtb.getDataToGraph();
@@ -282,7 +271,6 @@ public class EKGViewController implements ActionListener {
 					i = Filter.doSmooth(i);
 					dataQ.add(i);
 				}
-
 				break;
 			default:
 				break;
@@ -299,7 +287,7 @@ public class EKGViewController implements ActionListener {
 	}
 
 	/**
-	 * 
+	 * Åbner historik-vinduet
 	 */
 	@FXML
 	public void handleShowHistory() {
@@ -307,8 +295,10 @@ public class EKGViewController implements ActionListener {
 	}
 
 	/**
+	 * Opdaterer grænsefladen med den nyeste puls
 	 * 
 	 * @param newPulse
+	 *            den nye puls-værdi
 	 */
 	public void updatePulse(int newPulse) {
 		Platform.runLater(new Runnable() {
@@ -320,21 +310,4 @@ public class EKGViewController implements ActionListener {
 		});
 
 	}
-
-	/**
-	 * 
-	 */
-	private void handleNewPulse() {
-		try {
-			updatePulse(dtb.getPulse());
-		} catch (SQLException e) {
-			Alert alert = new Alert(AlertType.ERROR);
-			alert.setTitle("Fejl i " + this.getClass().getSimpleName());
-			alert.setHeaderText("Der skete en fejl! Se detaljerne nedenfor.");
-			alert.setContentText(e.getClass().getName() + ": " + e.getMessage());
-
-			alert.showAndWait();
-		}
-	}
-
 }

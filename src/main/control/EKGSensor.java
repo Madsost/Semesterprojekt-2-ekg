@@ -5,91 +5,29 @@ import jssc.SerialPortEvent;
 import jssc.SerialPortEventListener;
 import jssc.SerialPortException;
 import jssc.SerialPortList;
+import main.MainApp;
 
 /**
+ * Ansvarlig for kommunikation med den serielle forbindelse til Arduinoen.
  * 
- * @author Mads Østergaard
+ * @author Mads Østergaard, Emma Lundgaard og Morten Vorborg.
  *
  */
 public class EKGSensor implements Sensor {
 
 	private Queue queue = Queue.getInstance();
-	private int baudRate = 19200;
 	private SerialPort port;
 	private String input = "";
 	private int toOutputCount = 0;
 	private double[] outputBuffer = new double[250];
 	private boolean running = false;
-	private String split = "!";
 
 	/**
-	 * 
-	 */
-	public EKGSensor() {
-		// init();
-	}
-
-	/**
-	 * 
-	 * @param event
-	 */
-	public void measure(SerialPortEvent event) {
-
-		// -------- NY KODE ------- //
-		// Kode jeg skrev til kursusopgaven, den burde gøre det
-		// rigtigt...
-
-		// ------ SLUT NY KODE ----//
-		/*
-		 * // put what is on the buffer in a String input +=
-		 * port.readString(event.getEventValue());
-		 * 
-		 * // while there is someting in the string we read, we // extract //
-		 * values from it while (input.contains(split)) { // if there are null
-		 * og nothing instead of a // value, remove // it if (input.substring(0,
-		 * input.indexOf(split)).contains("null") || input.substring(0,
-		 * input.indexOf(split)).equals("")) { input =
-		 * input.substring(input.indexOf(split) + 1); }
-		 * 
-		 * // read the next value, parse it to an int and // put it in the Queue
-		 * if (!(input.substring(0).equals(split))) { //
-		 * System.out.println(toOutputCount); outputBuffer[toOutputCount++] =
-		 * Double.parseDouble(input.substring(0, input.indexOf(split))); if
-		 * (toOutputCount == 250) { queue.addToBuffer(outputBuffer);
-		 * outputBuffer = new double[250]; toOutputCount = 0; } // removes the
-		 * value we just saved to // the queue so // we dont read it again input
-		 * = input.substring(input.indexOf(split) + 1);
-		 * 
-		 * } }
-		 */
-	}
-
-	/**
-	 * 
+	 * Kaldes af <code>Thread.start()</code> i MainApp. Læser input fra porten
+	 * og gemmer i <code>outputBuffer</code>. Parser strengen fra porten til double og kalder
+	 * <code>addToBuffer()</code> i <code>Queue</code> når der er 250 målinger.
 	 */
 	public void run() {
-
-		/*
-		 * try { // we listen on the Serial port port.addEventListener(new
-		 * SerialPortEventListener() {
-		 * 
-		 * @Override public void serialEvent(SerialPortEvent event) { if
-		 * (event.isRXCHAR() && event.getEventValue() > 0) { try { input +=
-		 * port.readString(); } catch (SerialPortException e) {
-		 * e.printStackTrace(); } int pos = -1; while ((pos =
-		 * input.indexOf("!")) > -1) { try { outputBuffer[toOutputCount++] =
-		 * Double.parseDouble(input.substring(0, pos)); } catch
-		 * (NumberFormatException e) { System.out.println("Number format "+
-		 * e.getMessage()); continue; } if (toOutputCount == 250) {
-		 * queue.addToBuffer(outputBuffer); outputBuffer = new double[250];
-		 * toOutputCount = 0; } // System.out.println(input); input =
-		 * input.substring(pos + 1); // System.out.println(input);
-		 * 
-		 * } }
-		 * 
-		 * } }); } catch (SerialPortException e) { e.printStackTrace(); }
-		 */
-
 		// starter en løkke som vi kan styre...
 		running = true;
 		while (true) {
@@ -121,17 +59,14 @@ public class EKGSensor implements Sensor {
 		}
 	}
 
+	/**
+	 * Kaldes i <code>init()</code> for at rense forbindelsen.
+	 */
 	private void clearLine() {
 		try {
 			for (int i = 0; i < 100; i++) {
-				// hvis der er målinger på vej
-				String buffer = "";
 				if (port.getInputBufferBytesCount() > 0) {
-					buffer += port.readString();
-					int pos = -1;
-					if ((pos = buffer.lastIndexOf("!")) > -1) {
-						buffer = buffer.substring(pos + 1);
-					}
+					port.readString();
 				}
 			}
 		} catch (SerialPortException e2) {
@@ -140,7 +75,7 @@ public class EKGSensor implements Sensor {
 	}
 
 	/**
-	 * 
+	 * Opsætter den serielle forbindelse og renser de første målinger.
 	 */
 	@Override
 	public void init() {
@@ -148,6 +83,11 @@ public class EKGSensor implements Sensor {
 			// Laver et array af porte og sætter de tilgængelige porte ind
 			String[] portArray = SerialPortList.getPortNames();
 			// Gemmer navnet på den første port i portlisten i portName
+			if (portArray.length == 0) {
+				System.out.println(
+						"Der var ikke tilsluttet nogle enheder til programmet!\nPrøv igen. Programmet lukker.");
+				MainApp.stopApp();
+			}
 			String portName = portArray[0];
 			// laver en instans af SerialPort (jssc), port, med argumentet
 			// portName, som var dne første port i listen af porte
@@ -165,7 +105,7 @@ public class EKGSensor implements Sensor {
 			port.setFlowControlMode(SerialPort.FLOWCONTROL_NONE);
 			port.setDTR(true);
 
-			 clearLine();
+			clearLine();
 
 		} catch (SerialPortException ex) {
 			System.out.println("Serial Port Exception: " + ex);
@@ -173,7 +113,7 @@ public class EKGSensor implements Sensor {
 	}
 
 	/**
-	 * 
+	 * Pauser tråden
 	 */
 	@Override
 	public void pauseThread() throws InterruptedException {
@@ -181,7 +121,7 @@ public class EKGSensor implements Sensor {
 	}
 
 	/**
-	 * 
+	 * Fortsætter tråden
 	 */
 	@Override
 	public void resumeThread() {
@@ -189,12 +129,14 @@ public class EKGSensor implements Sensor {
 	}
 
 	/**
-	 * 
+	 * Afslutter forbindelsen
 	 */
 	@Override
 	public void stopConn() {
 		try {
-			port.closePort();
+			if (port != null) {
+				port.closePort();
+			}
 		} catch (SerialPortException e) {
 			e.printStackTrace();
 		}

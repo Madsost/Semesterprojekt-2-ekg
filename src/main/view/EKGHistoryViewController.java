@@ -23,12 +23,11 @@ import main.model.DatabaseConn;
 import main.util.Filter;
 
 /**
- * 
- * @author Mads Østergaard
+ * Håndterer historik-visning.
+ * @author Mads Østergaard, Emma Lundgaard og Morten Vorborg.
  *
  */
 public class EKGHistoryViewController {
-	private GuiController main = null;
 	private Stage dialogStage = null;
 	private DatabaseConn dtb = DatabaseConn.getInstance();
 
@@ -65,14 +64,7 @@ public class EKGHistoryViewController {
 	private ArrayList<Double> toSeries = null;
 
 	/**
-	 * 
-	 */
-	public EKGHistoryViewController() {
-
-	}
-
-	/**
-	 * 
+	 * Kaldes automatisk af loaderen.
 	 */
 	@FXML
 	public void initialize() {
@@ -166,7 +158,7 @@ public class EKGHistoryViewController {
 	}
 
 	/**
-	 * 
+	 * Håndterer luk-knap
 	 */
 	@FXML
 	private void handleExit() {
@@ -174,7 +166,7 @@ public class EKGHistoryViewController {
 	}
 
 	/**
-	 * 
+	 * Håndterer > knap
 	 */
 	@FXML
 	private void handleGraphChangeRight() {
@@ -184,24 +176,17 @@ public class EKGHistoryViewController {
 	}
 
 	/**
-	 * 
+	 * Håndterer < knap
 	 */
 	@FXML
 	private void handleGraphChangeLeft() {
-		counter = -100;
-		xAxis.setLowerBound(xAxis.getLowerBound() + counter);
-		xAxis.setUpperBound(xAxis.getUpperBound() + counter);
+		counter = 100;
+		xAxis.setLowerBound(xAxis.getLowerBound() - counter);
+		xAxis.setUpperBound(xAxis.getUpperBound() - counter);
 	}
 
 	/**
-	 * 
-	 * @param main
-	 */
-	public void setGuiController(GuiController main) {
-		this.main = main;
-	}
-
-	/**
+	 * Giver klassen adgang til dens dialogStage.
 	 * 
 	 * @param dialogStage
 	 */
@@ -210,7 +195,7 @@ public class EKGHistoryViewController {
 	}
 
 	/**
-	 * 
+	 * Håndterer + knap
 	 */
 	@FXML
 	private void handlePlus() {
@@ -220,7 +205,7 @@ public class EKGHistoryViewController {
 	}
 
 	/**
-	 * 
+	 * Håndtere - knap
 	 */
 	@FXML
 	private void handleMinus() {
@@ -230,7 +215,8 @@ public class EKGHistoryViewController {
 	}
 
 	/**
-	 * 
+	 * Beregner pulsen på baggrund af det aktuelle datasæt og opdaterer
+	 * puls-label med det.
 	 */
 	private void getPulse() {
 		pulseLabel.setText("" + cal.calculatePulse(toSeries));

@@ -3,15 +3,13 @@ package main.control;
 import java.sql.SQLException;
 import java.util.ArrayList;
 
-import javafx.scene.control.Alert;
-import javafx.scene.control.Alert.AlertType;
-import javafx.stage.Stage;
 import main.model.DatabaseConn;
 import main.util.Filter;
 
 /**
+ * Pulsberegner-klasse.
  * 
- * @author Mads Østergaard
+ * @author Mads Østergaard, Emma Lundgaard og Morten Vorborg.
  *
  */
 public class Calculator implements Runnable {
@@ -28,16 +26,11 @@ public class Calculator implements Runnable {
 	private boolean running = false;
 
 	/**
-	 * 
-	 */
-	public Calculator() {
-
-	}
-
-	/**
+	 * Beregner pulsen på baggrund af datasættet givet som parameter. Kaldes af EKGHistoryViewController.
 	 * 
 	 * @param toSeries
-	 * @return
+	 *            datasæt, der skal beregnes puls på.
+	 * @return den beregnede puls
 	 */
 	public int calculatePulse(ArrayList<Double> toSeries) {
 		ArrayList<Double> calcDataset2 = new ArrayList<>();
@@ -84,8 +77,9 @@ public class Calculator implements Runnable {
 	}
 
 	/**
+	 * Beregner pulsen på baggrund af data fra databasen. Kaldes i EKGViewController.
 	 * 
-	 * @return
+	 * @return den beregnede puls
 	 */
 	public int calculatePulse() {
 		try {
@@ -131,10 +125,8 @@ public class Calculator implements Runnable {
 		}
 	}
 
-	// pre = -1; // post = -1; result = 0;
-
 	/**
-	 * 
+	 * Kaldes af <code>Thread.start()</code>
 	 */
 	@Override
 	public void run() {
@@ -159,6 +151,7 @@ public class Calculator implements Runnable {
 	}
 
 	/**
+	 * Pauser tråden
 	 * 
 	 * @throws InterruptedException
 	 */
@@ -167,7 +160,7 @@ public class Calculator implements Runnable {
 	}
 
 	/**
-	 * 
+	 * Fortsætter tråden
 	 */
 	public void resumeThread() {
 		running = true;
