@@ -12,7 +12,7 @@
 
 <AnchorPane accessibleRole="CHECK_BOX" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="500.0" prefWidth="1000.0" xmlns="http://javafx.com/javafx/8.0.111" xmlns:fx="http://javafx.com/fxml/1" fx:controller="main.view.EKGHistoryViewController">
    <children>
-      <LineChart fx:id="graph" layoutX="5.0" layoutY="34.0" prefHeight="336.0" prefWidth="980.0" title="Tidligere målinger" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
+      <LineChart fx:id="graph" layoutX="5.0" layoutY="34.0" prefHeight="336.0" prefWidth="980.0" title="Tidligere målinger" AnchorPane.bottomAnchor="154.0" AnchorPane.leftAnchor="10.0" AnchorPane.rightAnchor="10.0" AnchorPane.topAnchor="10.0">
         <xAxis>
           <NumberAxis side="BOTTOM" fx:id="xAxis" />
         </xAxis>
@@ -27,8 +27,8 @@
          </buttons>
       </ButtonBar>
       <ButtonBar layoutX="67.0" layoutY="231.0" prefHeight="40.0" prefWidth="200.0" />
-    <Button fx:id="forwardsButton" layoutX="944.0" layoutY="365.0" minWidth="17.0" mnemonicParsing="false" onAction="#handleGraphChangeRight" prefHeight="13.0" text="&gt;" AnchorPane.rightAnchor="25.0" AnchorPane.topAnchor="365.0" />
-    <Button fx:id="backwardsButton" layoutX="25.0" layoutY="365.0" mnemonicParsing="false" onAction="#handleGraphChangeLeft" text="&lt;" AnchorPane.leftAnchor="25.0" AnchorPane.topAnchor="365.0" />
+    <Button fx:id="forwardsButton" layoutX="944.0" layoutY="365.0" minWidth="17.0" mnemonicParsing="false" onAction="#handleGraphChangeRight" prefHeight="13.0" text="&gt;" AnchorPane.bottomAnchor="104.0" AnchorPane.rightAnchor="25.0" />
+    <Button fx:id="backwardsButton" layoutX="25.0" layoutY="365.0" mnemonicParsing="false" onAction="#handleGraphChangeLeft" text="&lt;" AnchorPane.bottomAnchor="104.0" AnchorPane.leftAnchor="25.0" />
       <Label layoutX="41.0" layoutY="303.0" text="Start tid" AnchorPane.bottomAnchor="76.0" AnchorPane.leftAnchor="41.0" />
       <TextField fx:id="inputField" layoutX="27.0" layoutY="330.0" prefHeight="9.0" prefWidth="80.0" AnchorPane.bottomAnchor="39.0" AnchorPane.leftAnchor="27.0" />
       <Label layoutX="107.0" layoutY="324.0" AnchorPane.leftAnchor="110.0" />
@@ -44,8 +44,8 @@
          </font>
       </Label>
       <Label fx:id="pulseIcon" layoutX="608.0" layoutY="407.0" prefHeight="21.0" prefWidth="20.0" AnchorPane.bottomAnchor="72.0" />
-      <Button fx:id="minus" layoutX="469.0" layoutY="365.0" mnemonicParsing="false" onAction="#handleMinus" prefHeight="31.0" prefWidth="31.0" text="-" AnchorPane.bottomAnchor="104.0" />
-      <Button fx:id="plus" layoutX="500.0" layoutY="365.0" mnemonicParsing="false" onAction="#handlePlus" text="+" AnchorPane.bottomAnchor="104.0" />
+      <Button fx:id="minus" layoutX="469.0" layoutY="365.0" mnemonicParsing="false" onAction="#handleMinus" prefHeight="31.0" prefWidth="31.0" text="-" AnchorPane.bottomAnchor="104.0" AnchorPane.leftAnchor="469.0" />
+      <Button fx:id="plus" layoutX="500.0" layoutY="365.0" mnemonicParsing="false" onAction="#handlePlus" prefHeight="31.0" prefWidth="31.0" text="+" AnchorPane.bottomAnchor="104.0" AnchorPane.rightAnchor="469.0" />
       <TextArea editable="false" layoutX="167.0" layoutY="366.0" prefHeight="137.0" prefWidth="200.0" text="Vælg en starttid i boksen til venstre og tryk på &quot;Hent&quot;.  &#10;Standart-tidspunktet er starttidspunktet for den nuværende undersøgelse" wrapText="true" AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="167.0" />
    </children>
 </AnchorPane>

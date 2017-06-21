@@ -43,7 +43,7 @@ public class GuiController extends Application {
 		try {
 			this.primaryStage = primaryStage;
 
-			this.primaryStage.setTitle("GUI");
+			this.primaryStage.setTitle("EKG Målesystem");
 
 			this.primaryStage.getIcons().add(new Image("file:resources/images/cardiogram2.png"));
 
@@ -148,6 +148,8 @@ public class GuiController extends Application {
 			dialogStage.initOwner(primaryStage);
 			Scene scene = new Scene(page);
 			dialogStage.setScene(scene);
+			
+			dialogStage.getIcons().add(new Image("file:resources/images/cardiogram2.png"));
 
 			// Giv controlleren kontrol over vinduet.
 			EKGHistoryViewController controller = loader.getController();

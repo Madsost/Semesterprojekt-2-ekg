@@ -43,14 +43,18 @@ public class Calculator implements Runnable {
 		ArrayList<Double> calcDataset2 = new ArrayList<>();
 		ArrayList<Double> inputDataset = toSeries;
 
+		if (inputDataset == null || inputDataset.size() == 0) { /* 1A */
+			return -1;
+		}
+
 		// Folder alt data fra sættet vi tog fra databasen med vores båndpass
 		// filter
-		for (double data : inputDataset) {
+		for (double data : inputDataset) { /* 1B */
 			calcDataset2.add(Filter.doFilter(data));
 		}
 
 		double max = 0;
-		for (double data : calcDataset2) {
+		for (double data : calcDataset2) { /* 1C */
 			max = (data > max) ? data : max;
 		}
 
@@ -66,17 +70,13 @@ public class Calculator implements Runnable {
 		int length2 = calcDataset2.size();
 
 		// Regner pulsen for det filteret signal
-		for (int n = 1; n < length2; n++) {
+		for (int n = 1; n < length2; n++) { /* 1D */
 			pre2 = -1;
 			post2 = -1;
-			if (calcDataset2.get(n - 1) > threshold2)
+			if (calcDataset2.get(n - 1) > threshold2) /* 1E */
 				pre2 = 1;
-			else
-				pre2 = -1;
-			if (calcDataset2.get(n) > threshold2)
+			if (calcDataset2.get(n) > threshold2) /* 1F */
 				post2 = 1;
-			else
-				post2 = -1;
 			zcross2 = zcross2 + (Math.abs(pre2 - post2) / 2);
 		}
 		result2 = (int) (60 * zcross2 / (2 * length2 / fs));
@@ -91,43 +91,39 @@ public class Calculator implements Runnable {
 		try {
 			calcDataset = new ArrayList<>();
 			ArrayList<Double> inputDataset = dtb.getData(1250);
-			if (inputDataset == null || inputDataset.size() == 0) {
+			if (inputDataset == null || inputDataset.size() == 0) { /* 2A */
 				return -1;
 			}
 
 			// Folder alt data fra sættet vi tog fra databasen med vores
 			// båndpass
 			// filter
-			for (double data : inputDataset) {
+			for (double data : inputDataset) { /* 2B */
 				double temp = Filter.doFilter(data);
 				calcDataset.add(temp);
 			}
 
 			double max = 0;
-			for (double data : calcDataset) {
+			for (double data : calcDataset) { /* 2C */
 				max = (data > max) ? data : max;
 			}
-
 			threshold = 0.8 * max;
-			// System.out.println(threshold);
 
 			// sætter længden på sættet inden vi beregner en puls
 			length = calcDataset.size();
-			// System.out.println(length);
 
 			zcross = 0.0;
 
-			for (int n = 1; n < length; n++) {
+			for (int n = 1; n < length; n++) { /* 2D */
 				pre = -1;
 				post = -1;
-				if (calcDataset.get(n - 1) > threshold)
+				if (calcDataset.get(n - 1) > threshold) /* 2E */
 					pre = 1;
-				if (calcDataset.get(n) > threshold)
+				if (calcDataset.get(n) > threshold) /* 2F */
 					post = 1;
 				zcross += (Math.abs(pre - post) / 2);
 			}
 			result = (int) (60 * zcross / (2 * length / fs));
-			// System.out.println(result);
 			return result;
 		} catch (SQLException e) {
 			e.printStackTrace();
@@ -145,18 +141,18 @@ public class Calculator implements Runnable {
 		running = true;
 		while (true) {
 			try {
-				while (!running) {
+				while (!running) { /* 3A */
 					Thread.sleep(200);
 				}
 				int pulse = calculatePulse();
-				if (pulse != -1) {
+				if (pulse != -1) { /* 3B */
 					dtb.addPulse(pulse);
 				}
 
 				Thread.sleep(4000);
-			} catch (InterruptedException e) {
+			} catch (InterruptedException e) { /* 3C */
 				e.printStackTrace();
-			} catch (SQLException e) {
+			} catch (SQLException e) { /* 3D */
 				e.printStackTrace();
 			}
 		}

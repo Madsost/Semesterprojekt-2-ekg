@@ -122,6 +122,7 @@ public class EKGViewController implements ActionListener {
 		yAxis.setTickMarkVisible(true);
 		yAxis.setMinorTickVisible(false);
 		yAxis.setTickLabelsVisible(true);
+		yAxis.setForceZeroInRange(false);
 
 		// -- indsæt grafen i graphPane (et anchor-pane)
 		lineChart.setPrefSize(graphPane.getPrefWidth(), graphPane.getPrefHeight());
@@ -153,9 +154,7 @@ public class EKGViewController implements ActionListener {
 	 * 
 	 */
 	private void addDataToSeries() {
-		int count = (dataQ.size() > 500) ? 3 : 2;
-		count = 4;
-		for (int i = 0; i < count; i++) {
+		for (int i = 0; i < 4; i++) {
 
 			if (dataQ.isEmpty()) {
 				return;

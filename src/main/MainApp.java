@@ -19,7 +19,7 @@ import javafx.application.Application;
 public class MainApp {
 	private static boolean running = false;
 	private static Sensor s = null;
-	private static boolean testing = false;
+	private static boolean testing = true;
 	private static Thread sensorThread = null;
 	private static DatabaseConn dtb = DatabaseConn.getInstance();
 

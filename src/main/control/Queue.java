@@ -22,38 +22,36 @@ public class Queue {
 		buffer = new ArrayList<>();
 	}
 
-	// insert value from sensor to the end of the buffer
-	// called from sensor to put values in the Queue
 	/**
-	 * 
+	 * insert value from sensor to the end of the buffer, 
+	 * called from sensor to put values in the Queue
 	 * @param value
 	 */
 	public synchronized void addToBuffer(double[] value) {
-		if (!empty) {
-			try {
+		if (!empty) {								/*1A*/
+			try {							
 				wait();
-			} catch (InterruptedException e) {
+			} catch (InterruptedException e) {		/*1B*/
 				e.printStackTrace();
 			}
 		}
-		for (double number : value) {
+		for (double number : value) {				/*1C*/
 			buffer.add(Filter.doNotch(number));
 		}
 		empty = false;
 		notify();
 	}
 
-	// returns and clears the buffer
 	/**
-	 * 
+	 * returns and clears the buffer
 	 * @return
 	 */
 	public synchronized ArrayList<Double> getBuffer() {
 		// if the buffer is empty, the thread is put to sleep
-		if (empty) {
+		if (empty) {								/*2A*/
 			try {
 				wait();
-			} catch (InterruptedException e) {
+			} catch (InterruptedException e) {		/*2B*/
 				e.printStackTrace();
 			}
 		}

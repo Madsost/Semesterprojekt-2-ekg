@@ -3,10 +3,7 @@ package main.util;
 /**
  * <h1>Hjælpeklasse til at filtrere data.</h1> </br>
  * 
- * Implementerer et båndpasfilter i java.</br>
- * Specifikationer: båndpas 0.25-->40Hz </br>
- * 200. orden FIR filter med vinduesfunktion </br>
- * vinduestype: taylor</br>
+ * Implementerer et: båndpasfilter (doFilter), udjævningsfilter (doSmooth) og et båndstopfilter (doNotch).</br>
  * 
  * @author Mads Østergaard
  *
@@ -95,20 +92,20 @@ public class Filter {
 
 		// gennemløb listerne og fold delayLine med coeffs: Sum(x(n-k)*h(n))
 		int index = count;
-		for (int i = 0; i < length; i++) {
+		for (int i = 0; i < length; i++) {					/*1A*/
 			result += coeffs[i] * delayLine[index];
 			// tæl index ned for at få den omvendte sekvens
 			index--;
 
 			// hvis index er < 0 skal vi fortsætte i max
-			if (index < 0)
+			if (index < 0)									/*1B*/
 				index = length - 1;
 		}
 		// tæl count op, så næste måling kommer ind på næste plads
 		count++;
 
 		// hvis count er større end længden, sættes ind på plads 0.
-		if (count >= length)
+		if (count >= length)								/*1C*/
 			count = 0;
 		return result;
 	}
@@ -125,20 +122,20 @@ public class Filter {
 
 		// gennemløb listerne og fold delayLine med coeffs: Sum(x(n-k)*h(n))
 		int index = smoothCount;
-		for (int i = 0; i < smoothLength; i++) {
-			result += smoothCoeffs[i] * smoothDelayLine[index]; // * (1 / 231);
+		for (int i = 0; i < smoothLength; i++) {			/*2A*/
+			result += smoothCoeffs[i] * smoothDelayLine[index];
 			// tæl index ned for at få den omvendte sekvens
 			index--;
 
 			// hvis index er < 0 skal vi fortsætte i max
-			if (index < 0)
+			if (index < 0)									/*2B*/
 				index = smoothLength - 1;
 		}
 		// tæl count op, så næste måling kommer ind på næste plads
 		smoothCount++;
 
 		// hvis count er større end længden, sættes ind på plads 0.
-		if (smoothCount >= smoothLength)
+		if (smoothCount >= smoothLength)					/*2C*/
 			smoothCount = 0;
 		// normalisering ( 1/21 ):
 		result *= normalize;
@@ -157,20 +154,20 @@ public class Filter {
 
 		// gennemløb listerne og fold delayLine med coeffs: Sum(x(n-k)*h(n))
 		int index = notchCount;
-		for (int i = 0; i < notchLength; i++) {
+		for (int i = 0; i < notchLength; i++) {				/*3A*/
 			result += notchCoeffs[i] * notchDelay[index];
 			// tæl index ned for at få den omvendte sekvens
 			index--;
 
 			// hvis index er < 0 skal vi fortsætte i max
-			if (index < 0)
+			if (index < 0)									/*3B*/
 				index = notchLength - 1;
 		}
 		// tæl count op, så næste måling kommer ind på næste plads
 		notchCount++;
 
 		// hvis count er større end længden, sættes ind på plads 0.
-		if (notchCount >= notchLength)
+		if (notchCount >= notchLength)						/*3C*/
 			notchCount = 0;
 		return result;
 	}
